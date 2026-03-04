@@ -941,7 +941,7 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
 
     if (egfrResult) {
       egfrResult.innerHTML = `
-        <div style="display:flex; align-items:center; gap:var(--space-md); padding:var(--space-md); border-radius:var(--radius-md); background:var(--bg-800); margin-bottom:var(--space-md);">
+        <div style="display:flex; align-items:center; gap:var(--space-md); padding:var(--space-md); border-radius:var(--radius-md); background:var(--slate-100); margin-bottom:var(--space-md); border: 1px solid var(--slate-200);">
           <div style="text-align:center; min-width:80px;">
             <div style="font-size:2rem; font-weight:800; font-family:var(--font-mono); color:${color};">${eGFR}</div>
             <div style="font-size:0.7rem; color:var(--text-muted);">mL/min/1.73m²</div>

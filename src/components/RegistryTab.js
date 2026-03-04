@@ -69,7 +69,7 @@ export class RegistryTab {
           </div>
           <div class="form-group" style="margin-bottom:0; flex:1; min-width:200px;">
             <label class="form-label">ID Generado</label>
-            <input type="text" class="form-input font-mono" id="output-patient-id" readonly placeholder="Se generará aquí..." style="background:var(--bg-800);" />
+            <input type="text" class="form-input font-mono" id="output-patient-id" readonly placeholder="Se generará aquí..." style="background:var(--slate-100);" />
           </div>
         </div>
 
