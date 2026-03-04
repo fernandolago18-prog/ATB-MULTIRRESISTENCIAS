@@ -1033,46 +1033,111 @@ textarea.form-input {
   color: var(--primary-600);
 }
 
-.chart-card {
+/* ============================================================================
+   Chart Panels (Dual selectable)
+   ============================================================================ */
+.chart-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.chart-panel {
   background: white;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-lg);
-  padding: var(--space-xl);
   box-shadow: var(--shadow-xs);
-  margin-bottom: var(--space-lg);
+  overflow: hidden;
 }
 
-.chart-title {
-  font-size: 0.95rem;
+.chart-panel-header {
+  padding: var(--space-md) var(--space-xl);
+  border-bottom: 1px solid var(--slate-200);
+  background: var(--slate-50);
+}
+
+.chart-selector {
+  width: 100%;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  color: var(--slate-800);
+  font-family: inherit;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: var(--slate-700);
-  margin-bottom: var(--space-lg);
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-fast);
 }
 
-.bar {
-  height: 32px;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-slow);
+.chart-selector:focus {
+  border-color: var(--primary-500);
+  box-shadow: var(--shadow-ring);
 }
 
-.bar-label {
-  font-size: 0.8rem;
-  color: var(--slate-600);
-  margin-bottom: var(--space-xs);
+.chart-panel-body {
+  padding: var(--space-xl);
+  min-height: 250px;
+}
+
+/* Bar chart rows */
+.chart-bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.chart-bar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 40px;
+  align-items: center;
+  gap: var(--space-md);
+  animation: slideUp 0.3s ease;
+}
+
+.chart-bar-name {
+  font-size: 0.82rem;
   font-weight: 500;
+  color: var(--slate-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.bar-value {
-  font-size: 0.75rem;
-  font-weight: 600;
+.chart-bar-track {
+  height: 28px;
+  background: var(--slate-100);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.chart-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 4px;
+}
+
+.chart-bar-count {
+  font-size: 0.82rem;
+  font-weight: 700;
   font-family: var(--font-mono);
-  color: var(--slate-500);
-  margin-left: var(--space-sm);
+  color: var(--slate-600);
+  text-align: right;
 }
 
-/* ============================================================================
-   Section Divider
-   ============================================================================ */
+@media (max-width: 768px) {
+  .chart-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-bar-row {
+    grid-template-columns: 90px 1fr 35px;
+  }
+}
+
 .section-divider {
   display: flex;
   align-items: center;
