@@ -28,6 +28,10 @@ export class ConsultaTab {
       antibiogramMode: 'manual', // 'manual' | 'image'
       showRenal: false,
       clCr: null,
+      creatinine: null,
+      age: null,
+      sex: null,
+      eGFR: null,
       result: null,
       geminiApiKey: ''
     };
@@ -845,24 +849,112 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
 
     container.innerHTML = `
       <div class="mt-md">
-        <div class="form-group" style="margin-bottom:var(--space-md);">
-          <label class="form-label">Aclaramiento de Creatinina (mL/min)</label>
-          <input type="number" class="form-input" id="input-clcr" 
-            placeholder="Introduce ClCr" min="0" max="250" 
-            value="${this.state.clCr || ''}"
-            style="max-width:200px;" />
+        <div class="form-label" style="margin-bottom:var(--space-sm); font-size:0.85rem; color:var(--text-muted);">Cálculo automático del Filtrado Glomerular (CKD-EPI 2021)</div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:var(--space-md); margin-bottom:var(--space-md);">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Creatinina sérica (mg/dL)</label>
+            <input type="number" class="form-input" id="input-creatinine" 
+              placeholder="Ej: 1.2" min="0.1" max="20" step="0.01"
+              value="${this.state.creatinine || ''}" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Edad (años)</label>
+            <input type="number" class="form-input" id="input-age" 
+              placeholder="Ej: 65" min="18" max="120"
+              value="${this.state.age || ''}" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Sexo</label>
+            <select class="form-select" id="select-sex">
+              <option value="">— Selecciona —</option>
+              <option value="M" ${this.state.sex === 'M' ? 'selected' : ''}>Masculino</option>
+              <option value="F" ${this.state.sex === 'F' ? 'selected' : ''}>Femenino</option>
+            </select>
+          </div>
         </div>
+        <div id="egfr-result"></div>
         <div id="renal-dose-result"></div>
       </div>
     `;
 
-    document.getElementById('input-clcr').addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
-      this.state.clCr = isNaN(val) ? null : val;
-      this.updateRenalDose();
+    // Bind events
+    const onInput = () => this.calculateCKDEPI();
+    document.getElementById('input-creatinine').addEventListener('input', (e) => {
+      this.state.creatinine = parseFloat(e.target.value) || null;
+      onInput();
+    });
+    document.getElementById('input-age').addEventListener('input', (e) => {
+      this.state.age = parseInt(e.target.value) || null;
+      onInput();
+    });
+    document.getElementById('select-sex').addEventListener('change', (e) => {
+      this.state.sex = e.target.value || null;
+      onInput();
     });
 
-    if (this.state.clCr) this.updateRenalDose();
+    // Restore previous calculation
+    if (this.state.creatinine && this.state.age && this.state.sex) {
+      this.calculateCKDEPI();
+    }
+  }
+
+  /**
+   * CKD-EPI 2021 (race-free) formula
+   * eGFR = 142 × min(SCr/κ, 1)^α × max(SCr/κ, 1)^(-1.200) × 0.9938^Age × (1.012 if female)
+   * κ = 0.7 (F), 0.9 (M)
+   * α = -0.241 (F), -0.302 (M)
+   */
+  calculateCKDEPI() {
+    const { creatinine, age, sex } = this.state;
+    const egfrResult = document.getElementById('egfr-result');
+
+    if (!creatinine || !age || !sex || creatinine <= 0) {
+      this.state.eGFR = null;
+      this.state.clCr = null;
+      if (egfrResult) egfrResult.innerHTML = '';
+      const doseResult = document.getElementById('renal-dose-result');
+      if (doseResult) doseResult.innerHTML = '';
+      return;
+    }
+
+    const kappa = sex === 'F' ? 0.7 : 0.9;
+    const alpha = sex === 'F' ? -0.241 : -0.302;
+    const sexMultiplier = sex === 'F' ? 1.012 : 1.0;
+
+    const scrKappa = creatinine / kappa;
+    const minTerm = Math.pow(Math.min(scrKappa, 1), alpha);
+    const maxTerm = Math.pow(Math.max(scrKappa, 1), -1.200);
+
+    const eGFR = Math.round(142 * minTerm * maxTerm * Math.pow(0.9938, age) * sexMultiplier);
+
+    this.state.eGFR = eGFR;
+    this.state.clCr = eGFR; // Use eGFR as the value for dose adjustment
+
+    // Determine category and color
+    let category, color, stage;
+    if (eGFR >= 90) { category = 'Normal o alto'; color = 'var(--success-text)'; stage = 'G1'; }
+    else if (eGFR >= 60) { category = 'Ligeramente disminuido'; color = 'var(--success-text)'; stage = 'G2'; }
+    else if (eGFR >= 45) { category = 'Descenso leve-moderado'; color = 'var(--warning-text)'; stage = 'G3a'; }
+    else if (eGFR >= 30) { category = 'Descenso moderado-grave'; color = 'var(--warning-text)'; stage = 'G3b'; }
+    else if (eGFR >= 15) { category = 'Descenso grave'; color = 'var(--danger-text)'; stage = 'G4'; }
+    else { category = 'Fallo renal'; color = 'var(--danger-text)'; stage = 'G5'; }
+
+    if (egfrResult) {
+      egfrResult.innerHTML = `
+        <div style="display:flex; align-items:center; gap:var(--space-md); padding:var(--space-md); border-radius:var(--radius-md); background:var(--bg-800); margin-bottom:var(--space-md);">
+          <div style="text-align:center; min-width:80px;">
+            <div style="font-size:2rem; font-weight:800; font-family:var(--font-mono); color:${color};">${eGFR}</div>
+            <div style="font-size:0.7rem; color:var(--text-muted);">mL/min/1.73m²</div>
+          </div>
+          <div style="flex:1;">
+            <div style="font-weight:600; color:${color};">${stage} — ${category}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">FGe calculado por CKD-EPI 2021 | Cr ${creatinine} mg/dL, ${age} años, ${sex === 'F' ? 'Mujer' : 'Varón'}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    this.updateRenalDose();
   }
 
   updateRenalDose() {
@@ -912,6 +1004,10 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
       dose: result.drug?.standardDose?.maintenance || 'N/A',
       renalAdjusted: this.state.showRenal,
       clCr: this.state.clCr,
+      eGFR: this.state.eGFR,
+      creatinine: this.state.creatinine,
+      patientAge: this.state.age,
+      patientSex: this.state.sex,
       antibiogram: antibiogramData.filter(r => r.antibiotic && r.sir),
       criteria: [...(result.funding?.criteria || []), ...(result.funding?.missing || [])],
       rationale: result.recommendation?.rationale || ''
