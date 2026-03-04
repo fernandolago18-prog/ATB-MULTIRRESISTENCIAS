@@ -5,6 +5,7 @@
 
 import { getRecords, deleteRecord, generatePatientId, isNHC, saveRecord } from '../data/database.js';
 import { showToast } from './Toast.js';
+import { ICONS } from '../icons.js';
 import * as XLSX from 'xlsx';
 
 export class RegistryTab {
@@ -27,18 +28,18 @@ export class RegistryTab {
     this.container.innerHTML = `
       <div class="flex justify-between items-center" style="flex-wrap:wrap; gap:var(--space-md); margin-bottom:var(--space-xl);">
         <div>
-          <h2>📋 Registro de Intervenciones</h2>
+          <h2>${ICONS.clipboard} Registro de Intervenciones</h2>
           <p class="text-sm text-muted">Historial de evaluaciones y comprobaciones</p>
         </div>
         <div class="flex gap-md">
-          <input type="text" class="form-input" id="registry-search" placeholder="🔍 Buscar..." style="width:250px;" />
-          <button class="btn btn-secondary" id="btn-export">📥 Exportar</button>
+          <input type="text" class="form-input" id="registry-search" placeholder="Buscar..." style="width:250px;" />
+          <button class="btn btn-secondary" id="btn-export">${ICONS.download} Exportar</button>
         </div>
       </div>
 
       <!-- NHC Warning -->
       <div class="alert alert-danger mb-lg">
-        <span class="alert-icon">🚫</span>
+        <span class="alert-icon">${ICONS.shieldAlert}</span>
         <div>
           <strong>PROTECCIÓN DE DATOS:</strong> Nunca introduzcas el Número de Historia Clínica (NHC) directamente. 
           Usa el generador de ID seudonimizado para identificar pacientes.
@@ -48,7 +49,7 @@ export class RegistryTab {
       <!-- Pseudonymized ID Generator -->
       <div class="card mb-lg">
         <div class="card-header">
-          <div class="card-icon">🆔</div>
+          <div class="card-icon">${ICONS.id}</div>
           <div>
             <div class="card-title">Generador de ID Seudonimizado</div>
             <div class="card-subtitle">Genera un ID seguro basado en iniciales y fecha</div>
@@ -75,7 +76,7 @@ export class RegistryTab {
 
         <!-- NHC Blocker -->
         <div id="nhc-warning" class="hidden alert alert-danger mt-md">
-          <span class="alert-icon">🚨</span>
+          <span class="alert-icon">${ICONS.alertTriangle}</span>
           <div>
             <strong>¡ATENCIÓN!</strong> El valor introducido parece ser un NHC (solo dígitos). 
             <br>Esto NO está permitido. Usa las iniciales del paciente.
@@ -86,7 +87,7 @@ export class RegistryTab {
       <!-- Records Table -->
       <div class="card">
         <div class="card-header">
-          <div class="card-icon">📑</div>
+          <div class="card-icon">${ICONS.fileText}</div>
           <div>
             <div class="card-title">Registros guardados</div>
             <div class="card-subtitle" id="record-count">Cargando...</div>
@@ -145,7 +146,7 @@ export class RegistryTab {
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
           <div class="modal">
-            <h3>📥 Exportar Registros a Excel</h3>
+            <h3>${ICONS.download} Exportar Registros a Excel</h3>
             <p class="text-sm text-muted mb-lg">Selecciona el rango de fechas para la exportación. Se incluirán todos los datos de cada consulta.</p>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-md);">
               <div class="form-group">
@@ -160,8 +161,8 @@ export class RegistryTab {
             <div id="export-preview" class="text-sm text-muted mb-lg"></div>
             <div class="modal-actions">
               <button class="btn btn-secondary" id="btn-export-cancel">Cancelar</button>
-              <button class="btn btn-primary" id="btn-export-all">📥 Exportar todo</button>
-              <button class="btn btn-success" id="btn-export-range">📥 Exportar rango</button>
+              <button class="btn btn-primary" id="btn-export-all">${ICONS.download} Exportar todo</button>
+              <button class="btn btn-success" id="btn-export-range">${ICONS.download} Exportar rango</button>
             </div>
           </div>
         `;

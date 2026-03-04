@@ -4,14 +4,15 @@
 // ============================================================================
 
 import { getStats, getRecords } from '../data/database.js';
+import { ICONS } from '../icons.js';
 
 const CHART_OPTIONS = [
-  { id: 'monthly-total', label: '📅 Consultas por Mes', icon: '📅' },
-  { id: 'monthly-approved', label: '✅ Aprobadas por Mes', icon: '✅' },
-  { id: 'monthly-rejected', label: '❌ Rechazadas por Mes', icon: '❌' },
-  { id: 'by-organism', label: '🦠 Distribución por Microorganismo', icon: '🦠' },
-  { id: 'by-drug', label: '💊 Uso de Fármacos', icon: '💊' },
-  { id: 'by-resistance', label: '🧬 Mecanismo de Resistencia', icon: '🧬' }
+  { id: 'monthly-total', label: `${ICONS.calendar} Consultas por Mes` },
+  { id: 'monthly-approved', label: `${ICONS.checkCircle} Aprobadas por Mes` },
+  { id: 'monthly-rejected', label: `${ICONS.xCircle} Rechazadas por Mes` },
+  { id: 'by-organism', label: `${ICONS.bug} Distribución por Microorganismo` },
+  { id: 'by-drug', label: `${ICONS.pill} Uso de Fármacos` },
+  { id: 'by-resistance', label: `${ICONS.dna} Mecanismo de Resistencia` }
 ];
 
 const CHART_COLORS = [
@@ -41,10 +42,10 @@ export class DashboardTab {
     this.container.innerHTML = `
       <div class="flex justify-between items-center" style="flex-wrap:wrap; gap:var(--space-md); margin-bottom: var(--space-xl);">
         <div>
-          <h2>📊 Dashboard de Gestión</h2>
+          <h2>${ICONS.barChart} Dashboard de Gestión</h2>
           <p class="text-sm text-muted">Resumen de uso y estadísticas de la plataforma</p>
         </div>
-        <button class="btn btn-secondary" id="btn-refresh-dashboard">🔄 Actualizar</button>
+        <button class="btn btn-secondary" id="btn-refresh-dashboard">${ICONS.refresh} Actualizar</button>
       </div>
       <div id="dashboard-content">
         <p class="text-muted text-center" style="padding:var(--space-2xl);">Cargando estadísticas...</p>
@@ -114,7 +115,7 @@ export class DashboardTab {
       <!-- Recent records -->
       <div class="card" style="margin-top:var(--space-xl);">
         <div class="card-header">
-          <div class="card-icon">🕒</div>
+          <div class="card-icon">${ICONS.clock}</div>
           <div>
             <div class="card-title">Últimas Consultas</div>
             <div class="card-subtitle">${(recent || []).length} registros más recientes</div>
@@ -185,7 +186,7 @@ export class DashboardTab {
     if (entries.length === 0) {
       container.innerHTML = `
         <div style="text-align:center; padding:var(--space-2xl); color:var(--slate-400);">
-          <div style="font-size:2rem; margin-bottom:var(--space-sm);">📭</div>
+          <div style="font-size:2rem; margin-bottom:var(--space-sm);">${ICONS.inbox}</div>
           <p>Sin datos disponibles</p>
         </div>`;
       return;

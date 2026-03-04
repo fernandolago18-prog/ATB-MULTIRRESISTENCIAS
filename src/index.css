@@ -119,6 +119,13 @@
   padding: 0;
 }
 
+/* Inline SVG icon alignment */
+svg {
+  display: inline-block;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+}
+
 html {
   font-size: 16px;
   scroll-behavior: smooth;

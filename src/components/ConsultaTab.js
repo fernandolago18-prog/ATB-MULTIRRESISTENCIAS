@@ -10,6 +10,7 @@ import {
   getSitesForDrug, getRenalAdjustedDose, evaluateFunding,
   getDrugsForOrganismResistance
 } from '../data/clinicalData.js';
+import { ICONS } from '../icons.js';
 import { saveRecord, generatePatientId, isNHC, getGeminiApiKey, saveGeminiApiKey } from '../data/database.js';
 import { showToast } from './Toast.js';
 
@@ -68,17 +69,17 @@ export class ConsultaTab {
     this.container.innerHTML = `
       <div class="entry-screen">
         <div class="entry-title">
-          <h1>🔬 Nueva Consulta</h1>
+          <h1>${ICONS.stethoscope} Nueva Consulta</h1>
           <p>Selecciona cómo quieres empezar la evaluación antimicrobiana</p>
         </div>
         <div class="entry-cards">
           <div class="card card-interactive entry-card" id="entry-by-drug">
-            <span class="entry-card-icon">💊</span>
+            <span class="entry-card-icon">${ICONS.pill}</span>
             <h2>Por Fármaco</h2>
             <p>Tengo un fármaco y quiero validar si está indicado</p>
           </div>
           <div class="card card-interactive entry-card" id="entry-by-organism">
-            <span class="entry-card-icon">🦠</span>
+            <span class="entry-card-icon">${ICONS.bug}</span>
             <h2>Por Microorganismo</h2>
             <p>Tengo un aislamiento y busco el fármaco recomendado</p>
           </div>
@@ -108,7 +109,7 @@ export class ConsultaTab {
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-icon">${isDrugFirst ? '💊' : '🦠'}</div>
+          <div class="card-icon">${isDrugFirst ? ICONS.pill : ICONS.bug}</div>
           <div>
             <div class="card-title">${isDrugFirst ? 'Evaluación por Fármaco' : 'Evaluación por Microorganismo'}</div>
             <div class="card-subtitle">Completa los campos progresivamente</div>
@@ -347,7 +348,7 @@ export class ConsultaTab {
     section.innerHTML = `
       <div class="card mt-xl">
         <div class="card-header">
-          <div class="card-icon">📊</div>
+          <div class="card-icon">${ICONS.activity}</div>
           <div>
             <div class="card-title">Antibiograma</div>
             <div class="card-subtitle">Introduce los datos del antibiograma para la evaluación</div>
@@ -356,10 +357,10 @@ export class ConsultaTab {
 
         <div class="flex gap-md mb-lg">
           <button class="btn ${this.state.antibiogramMode === 'manual' ? 'btn-primary' : 'btn-secondary'}" id="btn-antibiogram-manual">
-            ✏️ Entrada manual
+            ${ICONS.settings} Entrada manual
           </button>
           <button class="btn ${this.state.antibiogramMode === 'image' ? 'btn-primary' : 'btn-secondary'}" id="btn-antibiogram-image">
-            📷 Subir imagen
+            ${ICONS.camera} Subir imagen
           </button>
         </div>
 
@@ -367,7 +368,7 @@ export class ConsultaTab {
 
         <div class="mt-lg" style="text-align: right;">
           <button class="btn btn-primary btn-lg" id="btn-evaluate">
-            🔍 Evaluar Criterios
+            ${ICONS.search} Evaluar Criterios
           </button>
         </div>
       </div>
@@ -477,7 +478,7 @@ export class ConsultaTab {
 
     content.innerHTML = `
       <div class="upload-zone" id="upload-zone">
-        <div class="upload-zone-icon">📷</div>
+        <div class="upload-zone-icon">${ICONS.camera}</div>
         <div class="upload-zone-text">Arrastra una imagen del antibiograma aquí o haz clic para seleccionar</div>
         <div class="upload-zone-hint">Formatos: JPG, PNG, WEBP — Se procesará con Gemini AI</div>
         <input type="file" id="antibiogram-file" accept="image/*" style="display:none" />
@@ -486,10 +487,10 @@ export class ConsultaTab {
       <div id="gemini-status"></div>
       ${!this.state.geminiApiKey ? `
         <div class="alert alert-warning mt-md">
-          <span class="alert-icon">⚠️</span>
+          <span class="alert-icon">${ICONS.alertTriangle}</span>
           <div>
             <strong>API Key necesaria.</strong> Configura tu clave de Gemini para procesar imágenes.
-            <button class="btn btn-sm btn-secondary mt-md" id="btn-set-api-key">🔑 Configurar API Key</button>
+            <button class="btn btn-sm btn-secondary mt-md" id="btn-set-api-key">${ICONS.key} Configurar API Key</button>
           </div>
         </div>
       ` : ''}
@@ -730,7 +731,7 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
     if (result.drug) {
       drugInfo = `
         <div class="dosing-card">
-          <h3 style="margin-bottom: var(--space-md);">💊 ${result.drug.abbr} — ${result.drug.name}</h3>
+          <h3 style="margin-bottom: var(--space-md);">${ICONS.pill} ${result.drug.abbr} — ${result.drug.name}</h3>
           ${result.recommendation ? `<p style="color:var(--text-secondary); margin-bottom:var(--space-md);">${result.recommendation.rationale}</p>` : ''}
           
           <div class="dosing-grid">
@@ -814,8 +815,8 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
         <!-- Save section -->
         <div class="section-divider">Guardar registro</div>
         <div class="flex gap-md items-center" style="flex-wrap:wrap;">
-          <button class="btn btn-success" id="btn-save-record">📋 Guardar en Registro</button>
-          <button class="btn btn-secondary" id="btn-new-consulta">🔄 Nueva Consulta</button>
+          <button class="btn btn-success" id="btn-save-record">${ICONS.save} Guardar en Registro</button>
+          <button class="btn btn-secondary" id="btn-new-consulta">${ICONS.refresh} Nueva Consulta</button>
         </div>
       </div>
     `;
