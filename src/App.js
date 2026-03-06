@@ -1,29 +1,63 @@
 // ============================================================================
 // ATB-SMS: Main Application Shell
-// Tab navigation and component orchestration
+// Tab navigation, Authentication and Component orchestration
 // ============================================================================
 
 import { ConsultaTab } from './components/ConsultaTab.js';
 import { RegistryTab } from './components/RegistryTab.js';
 import { DashboardTab } from './components/DashboardTab.js';
+import { LoginTab } from './components/LoginTab.js';
 import { showToast } from './components/Toast.js';
 import { ICONS } from './icons.js';
+import { supabase } from './data/supabaseClient.js';
 
 export class App {
   constructor(container) {
     this.container = container;
     this.currentTab = 'consulta';
     this.tabs = {};
+    this.user = null;
+    this.isInitialized = false;
   }
 
-  mount() {
-    this.render();
-    this.initTabs();
-    this.bindEvents();
-    this.switchTab('consulta');
+  async mount() {
+    // Check initial session
+    const { data: { session } } = await supabase.auth.getSession();
+    this.user = session?.user || null;
+
+    // Listen for auth changes
+    supabase.auth.onAuthStateChange((event, session) => {
+      this.user = session?.user || null;
+      if (this.isInitialized) {
+        this.renderRoot();
+      }
+    });
+
+    this.renderRoot();
+    this.isInitialized = true;
   }
 
-  render() {
+  renderRoot() {
+    if (!this.user) {
+      this.renderLogin();
+    } else {
+      this.renderMain();
+    }
+  }
+
+  renderLogin() {
+    this.container.innerHTML = `<div id="auth-container"></div>`;
+    const loginTab = new LoginTab(
+      document.getElementById('auth-container'),
+      (user) => {
+        this.user = user;
+        this.renderMain();
+      }
+    );
+    loginTab.mount();
+  }
+
+  renderMain() {
     this.container.innerHTML = `
       <header class="app-header">
         <div class="app-header-inner">
@@ -34,6 +68,7 @@ export class App {
               <div class="app-logo-subtitle">Soporte Decisión Antimicrobiana</div>
             </div>
           </div>
+          
           <nav class="nav-tabs" id="nav-tabs">
             <button class="nav-tab active" data-tab="consulta">
               <span class="nav-tab-icon">${ICONS.stethoscope}</span>
@@ -48,6 +83,15 @@ export class App {
               Dashboard
             </button>
           </nav>
+
+          <div class="user-profile">
+            <div class="user-info">
+              <div class="user-email">${this.user.email}</div>
+            </div>
+            <button class="btn btn-icon btn-secondary" id="btn-logout" title="Cerrar sesión">
+              ${ICONS.logout}
+            </button>
+          </div>
         </div>
       </header>
       <main class="main-content">
@@ -56,13 +100,16 @@ export class App {
         <div id="tab-dashboard" class="tab-content"></div>
       </main>
     `;
+
+    this.initTabs();
+    this.bindEvents();
+    this.switchTab(this.currentTab);
   }
 
   initTabs() {
     this.tabs.consulta = new ConsultaTab(
       document.getElementById('tab-consulta'),
       (record) => {
-        // Callback when a record is saved from the consulta tab
         if (this.tabs.registro) this.tabs.registro.refresh();
         if (this.tabs.dashboard) this.tabs.dashboard.refresh();
         showToast('Registro guardado correctamente', 'success');
@@ -78,12 +125,23 @@ export class App {
   }
 
   bindEvents() {
-    document.getElementById('nav-tabs').addEventListener('click', (e) => {
-      const tab = e.target.closest('.nav-tab');
-      if (tab) {
-        this.switchTab(tab.dataset.tab);
-      }
-    });
+    const nav = document.getElementById('nav-tabs');
+    if (nav) {
+      nav.addEventListener('click', (e) => {
+        const tab = e.target.closest('.nav-tab');
+        if (tab) {
+          this.switchTab(tab.dataset.tab);
+        }
+      });
+    }
+
+    const logoutBtn = document.getElementById('btn-logout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        showToast('Sesión cerrada', 'info');
+      });
+    }
   }
 
   switchTab(tabName) {

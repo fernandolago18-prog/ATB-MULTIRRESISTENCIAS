@@ -276,6 +276,64 @@ h3 {
   font-size: 1rem;
 }
 
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding-left: var(--space-lg);
+  border-left: 1px solid var(--slate-200);
+}
+
+.user-info {
+  text-align: right;
+}
+
+.user-email {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+
+/* ============================================================================
+   Stepper
+   ============================================================================ */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.step {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--slate-200);
+  color: var(--slate-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all var(--transition-base);
+}
+
+.step.active {
+  background: var(--primary-500);
+  color: white;
+  box-shadow: 0 0 0 4px var(--primary-100);
+}
+
+.step.completed {
+  background: var(--success-500);
+  color: white;
+}
+
+.step-line {
+  width: 24px;
+  height: 2px;
+  background: var(--slate-200);
+}
+
 /* ============================================================================
    Main Content
    ============================================================================ */
@@ -1331,6 +1389,65 @@ textarea.form-input {
     margin: var(--space-md);
     padding: var(--space-lg);
   }
+}
+
+/* ============================================================================
+   Login Screen
+   ============================================================================ */
+.login-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--slate-50);
+  background-image: radial-gradient(var(--primary-100) 1px, transparent 1px);
+  background-size: 32px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: var(--space-xl);
+}
+
+.login-card {
+  background: white;
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-3xl);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl), 0 0 0 1px var(--slate-200);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-header h2 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-xs);
+}
+
+.auth-toggle {
+  text-align: center;
+  margin-top: var(--space-xl);
+  font-size: 0.875rem;
+  color: var(--slate-500);
+}
+
+.auth-toggle a {
+  color: var(--primary-600);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-toggle a:hover {
+  text-decoration: underline;
 }
 
 /* ============================================================================

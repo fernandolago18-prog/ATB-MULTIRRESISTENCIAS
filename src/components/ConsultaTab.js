@@ -104,15 +104,24 @@ export class ConsultaTab {
     const isDrugFirst = this.state.entryMode === 'drug';
 
     this.container.innerHTML = `
-      <div style="margin-bottom: var(--space-lg);">
+      <div style="margin-bottom: var(--space-lg); display:flex; justify-content:space-between; align-items:center;">
         <button class="btn btn-secondary btn-sm" id="btn-back-entry">← Volver</button>
+        <div class="stepper" id="consulta-stepper">
+          <div class="step active" data-step="1">1</div>
+          <div class="step-line"></div>
+          <div class="step" data-step="2">2</div>
+          <div class="step-line"></div>
+          <div class="step" data-step="3">3</div>
+          <div class="step-line"></div>
+          <div class="step" data-step="4">4</div>
+        </div>
       </div>
       <div class="card">
         <div class="card-header">
           <div class="card-icon">${isDrugFirst ? ICONS.pill : ICONS.bug}</div>
           <div>
             <div class="card-title">${isDrugFirst ? 'Evaluación por Fármaco' : 'Evaluación por Microorganismo'}</div>
-            <div class="card-subtitle">Completa los campos progresivamente</div>
+            <div class="card-subtitle">Completa los campos progresivamente para obtener el resultado</div>
           </div>
         </div>
         <div id="cascade-form"></div>
@@ -128,6 +137,16 @@ export class ConsultaTab {
     } else {
       this.renderOrganismFirst();
     }
+  }
+
+  updateStepper(currentStep) {
+    const steps = document.querySelectorAll('.stepper .step');
+    steps.forEach(s => {
+      const stepNum = parseInt(s.dataset.step);
+      s.classList.remove('active', 'completed');
+      if (stepNum < currentStep) s.classList.add('completed');
+      if (stepNum === currentStep) s.classList.add('active');
+    });
   }
 
   // ---- Path A: Drug → Organism → Resistance → Site ----
@@ -162,6 +181,7 @@ export class ConsultaTab {
       document.getElementById('result-section').innerHTML = '';
 
       if (this.state.selectedDrug) {
+        this.updateStepper(2);
         const drug = DRUGS[this.state.selectedDrug];
         const orgs = getOrganismsForDrug(this.state.selectedDrug);
         const orgOptions = orgs.map(o =>
@@ -189,6 +209,7 @@ export class ConsultaTab {
           document.getElementById('result-section').innerHTML = '';
 
           if (this.state.selectedOrganism) {
+            this.updateStepper(3);
             this.renderResistanceStep('cascade-step-3', 3);
           }
         });
@@ -228,6 +249,7 @@ export class ConsultaTab {
       document.getElementById('result-section').innerHTML = '';
 
       if (this.state.selectedOrganism) {
+        this.updateStepper(2);
         this.renderResistanceStep('cascade-step-2', 2);
       }
     });
@@ -264,6 +286,7 @@ export class ConsultaTab {
       document.getElementById('result-section').innerHTML = '';
 
       if (this.state.selectedResistance) {
+        this.updateStepper(stepNum + 1);
         // KPC needs context
         if (this.state.selectedResistance === 'KPC' && this.state.selectedOrganism === 'Enterobacterales') {
           this.renderKPCContext(nextContainer, stepNum + 1);
@@ -297,6 +320,7 @@ export class ConsultaTab {
     container.querySelectorAll('input[name="kpc-context"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
         this.state.kpcContext = e.target.value;
+        this.updateStepper(stepNum + 1);
         document.getElementById(`cascade-step-${stepNum + 1}`).innerHTML = '';
         document.getElementById('result-section').innerHTML = '';
         this.renderSiteStep(`cascade-step-${stepNum + 1}`, stepNum + 1);
