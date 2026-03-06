@@ -232,28 +232,28 @@ export const ORGANISMS = {
         name: 'Enterobacterales',
         description: 'Citrobacter, E. coli, Klebsiella, Morganella, Proteus, Providencia, Raoultella, Serratia',
         resistanceMechanisms: ['MBL', 'KPC', 'OXA_48', 'BLEE_AmpC'],
-        icon: '🦠'
+        icon: ICONS.bugEntero
     },
     'P_aeruginosa': {
         id: 'P_aeruginosa',
         name: 'Pseudomonas aeruginosa',
         description: 'P. aeruginosa DTR (Difficult-to-Treat Resistance)',
         resistanceMechanisms: ['MBL', 'DTR', 'ClassA_C'],
-        icon: '🔬'
+        icon: ICONS.bugPseudo
     },
     'A_baumannii': {
         id: 'A_baumannii',
         name: 'Acinetobacter baumannii',
         description: 'A. baumannii resistente a carbapenémicos',
         resistanceMechanisms: ['CR'],
-        icon: '🧫'
+        icon: ICONS.bugAcineto
     },
     'S_maltophilia': {
         id: 'S_maltophilia',
         name: 'Stenotrophomonas maltophilia',
         description: 'S. maltophilia multirresistente',
         resistanceMechanisms: ['MDR'],
-        icon: '🔎'
+        icon: ICONS.bugSteno
     }
 };
 
