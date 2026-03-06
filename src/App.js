@@ -21,27 +21,38 @@ export class App {
   }
 
   async mount() {
-    // Check initial session
-    const { data: { session } } = await supabase.auth.getSession();
-    this.user = session?.user || null;
-
-    // Listen for auth changes
-    supabase.auth.onAuthStateChange((event, session) => {
+    try {
+      // Check initial session
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
       this.user = session?.user || null;
-      if (this.isInitialized) {
-        this.renderRoot();
-      }
-    });
 
-    this.renderRoot();
-    this.isInitialized = true;
+      // Listen for auth changes
+      supabase.auth.onAuthStateChange((event, session) => {
+        this.user = session?.user || null;
+        if (this.isInitialized) {
+          this.renderRoot();
+        }
+      });
+
+      this.renderRoot();
+      this.isInitialized = true;
+    } catch (err) {
+      console.error('App mount failure:', err);
+      this.container.innerHTML = `<div style="padding:2rem; color:red">Error de conexión con Supabase. Verifica tu conexión a internet o la configuración del cliente.</div>`;
+    }
   }
 
   renderRoot() {
-    if (!this.user) {
-      this.renderLogin();
-    } else {
-      this.renderMain();
+    try {
+      if (!this.user) {
+        this.renderLogin();
+      } else {
+        this.renderMain();
+      }
+    } catch (err) {
+      console.error('RenderRoot failure:', err);
+      this.container.innerHTML = `<div style="padding:2rem; color:red">Error al renderizar la aplicación: ${err.message}</div>`;
     }
   }
 
@@ -107,21 +118,25 @@ export class App {
   }
 
   initTabs() {
-    this.tabs.consulta = new ConsultaTab(
-      document.getElementById('tab-consulta'),
-      (record) => {
-        if (this.tabs.registro) this.tabs.registro.refresh();
-        if (this.tabs.dashboard) this.tabs.dashboard.refresh();
-        showToast('Registro guardado correctamente', 'success');
-      }
-    );
-    this.tabs.consulta.mount();
+    try {
+      this.tabs.consulta = new ConsultaTab(
+        document.getElementById('tab-consulta'),
+        (record) => {
+          if (this.tabs.registro) this.tabs.registro.refresh();
+          if (this.tabs.dashboard) this.tabs.dashboard.refresh();
+          showToast('Registro guardado correctamente', 'success');
+        }
+      );
+      this.tabs.consulta.mount();
 
-    this.tabs.registro = new RegistryTab(document.getElementById('tab-registro'));
-    this.tabs.registro.mount();
+      this.tabs.registro = new RegistryTab(document.getElementById('tab-registro'));
+      this.tabs.registro.mount();
 
-    this.tabs.dashboard = new DashboardTab(document.getElementById('tab-dashboard'));
-    this.tabs.dashboard.mount();
+      this.tabs.dashboard = new DashboardTab(document.getElementById('tab-dashboard'));
+      this.tabs.dashboard.mount();
+    } catch (err) {
+      console.error('Tabs init failure:', err);
+    }
   }
 
   bindEvents() {
@@ -156,11 +171,15 @@ export class App {
     document.getElementById(`tab-${tabName}`)?.classList.add('active');
 
     // Refresh data on switch
-    if (tabName === 'registro' && this.tabs.registro) {
-      this.tabs.registro.refresh();
-    }
-    if (tabName === 'dashboard' && this.tabs.dashboard) {
-      this.tabs.dashboard.refresh();
+    try {
+      if (tabName === 'registro' && this.tabs.registro) {
+        this.tabs.registro.refresh();
+      }
+      if (tabName === 'dashboard' && this.tabs.dashboard) {
+        this.tabs.dashboard.refresh();
+      }
+    } catch (err) {
+      console.error('Tab refresh failure:', err);
     }
   }
 }
