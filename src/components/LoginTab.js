@@ -1,6 +1,6 @@
 // ============================================================================
-// ATB-SMS: Login Tab
-// Supabase Authentication (Email/Password)
+// ATB-SMS: Login Tab (Strict Mode)
+// Supabase Authentication (Only pre-registered users)
 // ============================================================================
 
 import { supabase } from '../data/supabaseClient.js';
@@ -11,7 +11,6 @@ export class LoginTab {
   constructor(container, onLoginSuccess) {
     this.container = container;
     this.onLoginSuccess = onLoginSuccess;
-    this.mode = 'login'; // 'login' | 'signup'
     this.loading = false;
   }
 
@@ -32,7 +31,7 @@ export class LoginTab {
           <form id="login-form">
             <div class="form-group">
               <label class="form-label">Correo electrónico</label>
-              <input type="email" id="login-email" class="form-input" placeholder="ejemplo@sms.es" required />
+              <input type="email" id="login-email" class="form-input" placeholder="usuario@sms.es" required />
             </div>
             <div class="form-group">
               <label class="form-label">Contraseña</label>
@@ -40,19 +39,16 @@ export class LoginTab {
             </div>
 
             <button type="submit" class="btn btn-primary w-full btn-lg" id="btn-submit-auth" style="margin-top: var(--space-md);">
-              ${this.mode === 'login' ? 'Entrar' : 'Registrarse'}
+              Entrar
             </button>
           </form>
 
-          <div class="auth-toggle">
-            ${this.mode === 'login' 
-              ? '¿No tienes cuenta? <a href="#" id="toggle-signup">Crear cuenta</a>' 
-              : '¿Ya tienes cuenta? <a href="#" id="toggle-login">Acceder</a>'}
-          </div>
-          
-          <div class="alert alert-info mt-lg" style="font-size: 0.75rem; text-align: center;">
+          <div class="alert alert-info mt-lg" style="font-size: 0.75rem; text-align: center; border: none; background: var(--slate-50);">
             <span class="alert-icon">${ICONS.info}</span>
-            <div>Acceso restringido para personal del SMS (Servicio Murciano de Salud).</div>
+            <div>
+              <strong>Acceso Restringido</strong><br>
+              Solo personal autorizado del SMS. Si no tiene acceso, contacte con el equipo PROA.
+            </div>
           </div>
         </div>
       </div>
@@ -63,24 +59,6 @@ export class LoginTab {
 
   bindEvents() {
     const form = document.getElementById('login-form');
-    const toggleSignup = document.getElementById('toggle-signup');
-    const toggleLogin = document.getElementById('toggle-login');
-
-    if (toggleSignup) {
-      toggleSignup.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.mode = 'signup';
-        this.render();
-      });
-    }
-
-    if (toggleLogin) {
-      toggleLogin.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.mode = 'login';
-        this.render();
-      });
-    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -92,36 +70,30 @@ export class LoginTab {
 
       this.loading = true;
       submitBtn.disabled = true;
-      submitBtn.innerHTML = `<span class="spinner"></span> Procesando...`;
+      submitBtn.innerHTML = `<span class="spinner"></span> Validando...`;
 
       try {
-        if (this.mode === 'login') {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-          if (error) throw error;
-          showToast('Bienvenido de nuevo', 'success');
-          if (this.onLoginSuccess) this.onLoginSuccess(data.user);
-        } else {
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-          });
-
-          if (error) throw error;
-          showToast('Registro completado. Revisa tu email.', 'info');
-          this.mode = 'login';
-          this.render();
+        if (error) {
+          if (error.message === 'Invalid login credentials') {
+            throw new Error('Credenciales incorrectas o usuario no autorizado.');
+          }
+          throw error;
         }
+        
+        showToast('Acceso concedido', 'success');
+        if (this.onLoginSuccess) this.onLoginSuccess(data.user);
       } catch (err) {
         showToast(err.message || 'Error en la autenticación', 'error');
       } finally {
         this.loading = false;
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = this.mode === 'login' ? 'Entrar' : 'Registrarse';
+          submitBtn.innerHTML = 'Entrar';
         }
       }
     });
