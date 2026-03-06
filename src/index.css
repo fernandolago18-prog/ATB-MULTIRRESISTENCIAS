@@ -1363,36 +1363,158 @@ textarea.form-input {
 }
 
 /* ============================================================================
-   Responsive
+   Responsive & Mobile Optimization (Mobile-First)
    ============================================================================ */
 @media (max-width: 768px) {
-  .app-header-inner {
-    flex-direction: column;
+  /* Header adjustments */
+  .app-header {
+    padding: 0 var(--space-md);
     height: auto;
-    padding: var(--space-md) 0;
+  }
+
+  .app-header-inner {
+    height: 60px;
+    justify-content: center;
+  }
+
+  .user-profile {
+    position: absolute;
+    right: var(--space-md);
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .user-info {
+    display: none; /* Hide email on mobile header to save space */
+  }
+
+  /* Bottom Navigation for Mobile (App-like) */
+  .nav-tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--slate-200);
+    border-radius: 0;
+    justify-content: space-around;
+    z-index: 1000;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+  }
+
+  .nav-tab {
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--space-sm);
+    font-size: 0.7rem;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .nav-tab-icon {
+    font-size: 1.25rem;
+  }
+
+  .nav-tab.active {
+    color: var(--primary-600);
+  }
+
+  /* Main content padding for bottom nav */
+  .main-content {
+    padding: var(--space-lg) var(--space-md) 100px;
+  }
+
+  /* Entry cards stack */
+  .entry-cards {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .entry-card {
+    padding: var(--space-xl);
+  }
+
+  /* Tables to Cards on Mobile */
+  .registry-table thead {
+    display: none;
+  }
+
+  .registry-table, .registry-table tbody, .registry-table tr, .registry-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .registry-row {
+    margin-bottom: var(--space-md);
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    background: white;
+    position: relative;
+  }
+
+  .registry-table td {
+    border: none;
+    padding: var(--space-xs) 0;
+    text-align: left !important;
+  }
+
+  .registry-table td:last-child {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+    border-top: 1px solid var(--slate-100);
+    padding-top: var(--space-sm);
+  }
+
+  /* Dashboard adjustments */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-sm);
   }
 
-  .entry-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .main-content {
+  .stat-card {
     padding: var(--space-md);
   }
 
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .stat-value {
+    font-size: 1.5rem;
   }
 
-  .modal {
-    margin: var(--space-md);
-    padding: var(--space-lg);
+  .chart-panels {
+    grid-template-columns: 1fr;
+  }
+
+  /* Form adjustments */
+  .form-group {
+    margin-bottom: var(--space-md);
+  }
+
+  .btn-lg {
+    width: 100%;
+  }
+
+  /* Result Card */
+  .result-badge {
+    font-size: 1.1rem;
+  }
+
+  .dosing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Landscape / Small tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .entry-cards {
+    max-width: 90%;
   }
 }
 
 /* ============================================================================
-   Login Screen
+   Utility classes
    ============================================================================ */
 .login-screen {
   position: fixed;
