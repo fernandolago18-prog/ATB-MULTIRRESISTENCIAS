@@ -29,9 +29,14 @@ export class App {
 
       // Listen for auth changes
       supabase.auth.onAuthStateChange((event, session) => {
-        this.user = session?.user || null;
-        if (this.isInitialized) {
+        const newUser = session?.user || null;
+        
+        // Only re-render if auth status actually changed (login/logout)
+        if (this.isInitialized && !!this.user !== !!newUser) {
+          this.user = newUser;
           this.renderRoot();
+        } else {
+          this.user = newUser;
         }
       });
 

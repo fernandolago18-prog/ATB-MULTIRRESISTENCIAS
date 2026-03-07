@@ -46,7 +46,50 @@ export class ConsultaTab {
     } catch (e) {
       console.warn('Could not load Gemini API key:', e.message);
     }
-    this.renderEntryScreen();
+    
+    // Attempt to recover state from previous session
+    if (this.loadState()) {
+      if (this.state.result) {
+        this.renderCascadeForm();
+        this.renderAntibiogramSection();
+        this.renderResult();
+      } else if (this.state.selectedSite) {
+        this.renderCascadeForm();
+        this.renderAntibiogramSection();
+      } else if (this.state.entryMode) {
+        this.renderCascadeForm();
+      } else {
+        this.renderEntryScreen();
+      }
+    } else {
+      this.renderEntryScreen();
+    }
+  }
+
+  saveState() {
+    try {
+      sessionStorage.setItem('atb_consulta_state', JSON.stringify(this.state));
+    } catch (e) {
+      console.error('Failed to save state:', e);
+    }
+  }
+
+  loadState() {
+    try {
+      const saved = sessionStorage.getItem('atb_consulta_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.state = { ...this.state, ...parsed };
+        return true;
+      }
+    } catch (e) {
+      console.error('Failed to load state:', e);
+    }
+    return false;
+  }
+
+  clearState() {
+    sessionStorage.removeItem('atb_consulta_state');
   }
 
   // ======================================================================
@@ -89,10 +132,12 @@ export class ConsultaTab {
 
     document.getElementById('entry-by-drug').addEventListener('click', () => {
       this.state.entryMode = 'drug';
+      this.saveState();
       this.renderCascadeForm();
     });
     document.getElementById('entry-by-organism').addEventListener('click', () => {
       this.state.entryMode = 'organism';
+      this.saveState();
       this.renderCascadeForm();
     });
   }
@@ -755,14 +800,17 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
 
     // Contraindication Alert
     let contraindicationAlert = '';
-    if (result.funding?.contraindication) {
+    if (result.funding?.contraindication || (!result.meets && result.recommendation?.rationale)) {
+      const reason = result.funding?.contraindication || result.recommendation?.rationale;
       contraindicationAlert = `
-        <div class="alert alert-danger mb-lg">
-          <div style="display:flex; align-items:center; gap:var(--space-sm);">
+        <div class="alert alert-danger mb-lg" style="border-left: 5px solid var(--danger-600); background: var(--danger-50);">
+          <div style="display:flex; align-items:center; gap:var(--space-sm); margin-bottom: var(--space-xs);">
             <span style="font-size:1.5rem;">${ICONS.alertTriangle}</span>
-            <strong>CONTRAINDICACIÓN / INACTIVIDAD:</strong>
+            <strong style="text-transform: uppercase; letter-spacing: 0.5px;">Justificación Clínica / Restricción:</strong>
           </div>
-          <p style="margin-top:var(--space-xs); margin-left:2.2rem;">${result.funding.contraindication}</p>
+          <p style="margin-top:var(--space-xs); margin-left:2.2rem; font-size: 0.95rem; line-height: 1.5; color: var(--danger-700);">
+            ${reason}
+          </p>
         </div>
       `;
     }
