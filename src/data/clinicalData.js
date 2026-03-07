@@ -292,38 +292,36 @@ export function getRecommendation(organismId, resistanceId, contextId = null, si
     const results = [];
     if (organismId === 'Enterobacterales') {
         if (resistanceId === 'MBL') {
-            results.push({ drugId: 'ATM_AVI', priority: 1, rationale: 'Tratamiento de elección (o CFD si se precisa cobertura antipseudomónica).' });
-            results.push({ drugId: 'CFD', priority: 1, rationale: 'Tratamiento de elección (especialmente si precisa cobertura frente a P. aeruginosa DTR).' });
+            results.push({ drugId: 'ATM_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN. Priorizar si no hay cobertura antipseudomónica necesaria.' });
+            results.push({ drugId: 'CFD', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN. Especialmente si precisa cobertura frente a P. aeruginosa DTR.' });
         } else if (resistanceId === 'KPC') {
-            if (contextId === 'critical') results.push({ drugId: 'MERO_VABOR', priority: 1, rationale: 'Tratamiento de elección en paciente crítico o CMI elevada.' });
-            else if (contextId === 'anaerobic') results.push({ drugId: 'IMI_REL', priority: 1, rationale: 'Tratamiento de elección si se precisa cobertura anaerobia/G+.' });
-            else results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'Tratamiento de elección en paciente no crítico.' });
-            results.push({ drugId: 'ATM_AVI', priority: 2, rationale: 'Alternativa según antibiograma.' });
-            results.push({ drugId: 'CFD', priority: 2, rationale: 'Alternativa según antibiograma.' });
+            if (contextId === 'critical') {
+                results.push({ drugId: 'MERO_VABOR', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN en paciente crítico o CMI elevada.' });
+                results.push({ drugId: 'IMI_REL', priority: 1, rationale: 'Tratamiento de elección si se precisa cobertura anaerobia/G+.' });
+            } else {
+                results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN en paciente no crítico.' });
+                results.push({ drugId: 'MERO_VABOR', priority: 1, rationale: 'Alternativa preferente si falla CAZ/AVI.' });
+            }
         } else if (resistanceId === 'OXA_48') {
-            results.push({ drugId: 'CFP_ETZ', priority: 1, rationale: 'Elección si sensibilidad confirmada (ahorro carbapenémicos).' });
-            results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'Elección. Potente inhibidor de OXA-48.' });
-            results.push({ drugId: 'ATM_AVI', priority: 2, rationale: 'Alternativa según antibiograma.' });
-            results.push({ drugId: 'CFD', priority: 2, rationale: 'Alternativa según antibiograma.' });
+            results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN. Potente inhibidor de OXA-48.' });
+            results.push({ drugId: 'CFP_ETZ', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN si se asocia a BLEE o AmpC (Ahorro de carbapenémicos).' });
         } else if (resistanceId === 'BLEE_AmpC') {
-            results.push({ drugId: 'CFP_ETZ', priority: 1, rationale: 'Alternativa para preservar carbapenémicos.' });
+            results.push({ drugId: 'CFP_ETZ', priority: 1, rationale: 'Alternativa preferente para ahorro de carbapenémicos.' });
         }
-        if (siteId === 'IIAc') results.push({ drugId: 'ERV', priority: 2, rationale: 'Reserva en IIAc multirresistente.' });
     }
     if (organismId === 'P_aeruginosa') {
-        if (resistanceId === 'MBL') results.push({ drugId: 'CFD', priority: 1, rationale: 'Elección (única opción monobactámica/siderófora estable).' });
-        else if (resistanceId === 'ClassA_C') {
-            results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'Elección para Clase A (GES) o Clase C desreprimida.' });
-            results.push({ drugId: 'IMI_REL', priority: 1, rationale: 'Elección si precisa cobertura anaerobia.' });
-        } else if (resistanceId === 'DTR') results.push({ drugId: 'CTZ_TAZ', priority: 1, rationale: 'Elección para P. aeruginosa DTR sin carbapenemasa.' });
+        if (resistanceId === 'MBL') {
+            results.push({ drugId: 'CFD', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN. Única opción siderófora estable.' });
+        } else if (resistanceId === 'ClassA_C') {
+            results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'ELECCIÓN para Clase A (GES) o Clase C.' });
+            results.push({ drugId: 'IMI_REL', priority: 1, rationale: 'ELECCIÓN si precisa cobertura anaerobia.' });
+        } else if (resistanceId === 'DTR') {
+            results.push({ drugId: 'CTZ_TAZ', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN para P. aeruginosa DTR sin carbapenemasa.' });
+        }
     }
-    if (organismId === 'A_baumannii' && resistanceId === 'CR') {
-        results.push({ drugId: 'CFD', priority: 1, rationale: 'Alternativa según sensibilidad.' });
-        if (siteId === 'IIAc') results.push({ drugId: 'ERV', priority: 2, rationale: 'Alternativa en IIAc.' });
-    }
-    if (organismId === 'S_maltophilia' && resistanceId === 'MDR') {
-        results.push({ drugId: 'ATM_AVI', priority: 1, rationale: 'Elección (en combinación).' });
-        results.push({ drugId: 'CFD', priority: 1, rationale: 'Elección.' });
+    if (organismId === 'S_maltophilia') {
+        results.push({ drugId: 'ATM_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN.' });
+        results.push({ drugId: 'CFD', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN.' });
     }
     if (siteId && results.length > 0) {
         const filtered = results.filter(r => DRUGS[r.drugId].indications.includes(siteId));

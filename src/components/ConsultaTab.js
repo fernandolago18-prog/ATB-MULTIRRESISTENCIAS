@@ -798,10 +798,20 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
     const meetsText = result.meets ? 'CUMPLE CRITERIOS' : 'NO CUMPLE CRITERIOS';
     const meetsIcon = result.meets ? '✓' : '✗';
 
-    // Contraindication Alert
+    // Contraindication or Non-Recommended Alert
     let contraindicationAlert = '';
-    if (result.funding?.contraindication || (!result.meets && result.recommendation?.rationale)) {
-      const reason = result.funding?.contraindication || result.recommendation?.rationale;
+    const isNotRecommended = !result.meets && !result.funding?.contraindication;
+    
+    if (result.funding?.contraindication || isNotRecommended) {
+      let reason = result.funding?.contraindication;
+      
+      if (isNotRecommended) {
+        // Build a helpful explanation for "Not Recommended SMS"
+        const fundingNote = result.drug?.funding ? `<br><strong>Nota de Financiación:</strong> ${result.drug.funding}` : '';
+        const altNote = result.allRecommendations?.[0] ? `<br><strong>Opción preferente SMS:</strong> ${DRUGS[result.allRecommendations[0].drugId].abbr}` : '';
+        reason = `Este fármaco no es la opción de elección para el perfil de resistencia seleccionado según el protocolo SMS vigente.${fundingNote}${altNote}`;
+      }
+
       contraindicationAlert = `
         <div class="alert alert-danger mb-lg" style="border-left: 5px solid var(--danger-600); background: var(--danger-50);">
           <div style="display:flex; align-items:center; gap:var(--space-sm); margin-bottom: var(--space-xs);">
