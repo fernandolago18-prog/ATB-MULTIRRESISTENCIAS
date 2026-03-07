@@ -387,14 +387,48 @@ export function getContraindication(drugId, organismId, resistanceId) {
     return null;
 }
 
-export function evaluateFunding(organismId, resistanceId, drugId, hasAntibiogram = false) {
+export function evaluateFunding(organismId, resistanceId, drugId, antibiogramData = []) {
     const recs = getRecommendation(organismId, resistanceId);
     const isRecommended = recs.some(r => r.drugId === drugId);
     const contra = getContraindication(drugId, organismId, resistanceId);
-    const result = { meets: hasAntibiogram && !!resistanceId && isRecommended && !contra, criteria: [], missing: [], contraindication: contra };
+    
+    // Check specific drug sensitivity in antibiogram
+    const drugInAntibiogram = antibiogramData.find(a => 
+        a.antibiotic.toLowerCase().includes(DRUGS[drugId].abbr.toLowerCase()) || 
+        a.antibiotic.toLowerCase().includes(DRUGS[drugId].name.split('/')[0].toLowerCase())
+    );
+    
+    const isSensitive = drugInAntibiogram ? (drugInAntibiogram.sir === 'S' || drugInAntibiogram.sir === 'I') : true;
+    const hasAntibiogram = antibiogramData.length > 0;
+
+    // Detect phenotype incongruities (e.g., MBL + Carbapenem S)
+    const incongruities = [];
+    if (resistanceId === 'MBL' || resistanceId === 'KPC' || resistanceId === 'OXA_48') {
+        const carbapenems = ['Meropenem', 'Imipenem', 'Ertapenem'];
+        const sensitiveCarba = antibiogramData.filter(a => 
+            carbapenems.some(c => a.antibiotic.toLowerCase().includes(c.toLowerCase())) && a.sir === 'S'
+        );
+        if (sensitiveCarba.length > 0) {
+            incongruities.push(`Incongruencia: Un productor de ${resistanceId} no debería ser sensible a ${sensitiveCarba.map(c => c.antibiotic).join(', ')}.`);
+        }
+    }
+
+    const meets = hasAntibiogram && !!resistanceId && isRecommended && !contra && isSensitive && incongruities.length === 0;
+
+    const result = { 
+        meets: meets, 
+        criteria: [], 
+        missing: [], 
+        contraindication: contra,
+        incongruities: incongruities,
+        sensitivityIssue: drugInAntibiogram && !isSensitive
+    };
+
     if (hasAntibiogram) result.criteria.push('✓ Tratamiento dirigido'); else result.missing.push('✗ Falta antibiograma');
     if (resistanceId) result.criteria.push(`✓ Mecanismo: ${resistanceId}`); else result.missing.push('✗ Falta mecanismo');
     if (isRecommended) result.criteria.push('✓ Recomendado SMS'); else result.missing.push('✗ No recomendado SMS');
+    if (drugInAntibiogram && !isSensitive) result.missing.push(`✗ Fármaco Resistente (R) en antibiograma`);
+    
     return result;
 }
 

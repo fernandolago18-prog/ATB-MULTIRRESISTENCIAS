@@ -746,7 +746,7 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
     if (entryMode === 'drug' && this.state.selectedDrug) {
       // Evaluate specific drug
       const drug = DRUGS[this.state.selectedDrug];
-      const funding = evaluateFunding(selectedOrganism, selectedResistance, this.state.selectedDrug, hasAntibiogram);
+      const funding = evaluateFunding(selectedOrganism, selectedResistance, this.state.selectedDrug, antibiogramData);
       const isRecommended = recommendations.some(r => r.drugId === this.state.selectedDrug);
       const matchedRec = recommendations.find(r => r.drugId === this.state.selectedDrug);
 
@@ -762,7 +762,7 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
       // Show recommended drugs
       if (recommendations.length > 0) {
         const topDrug = DRUGS[recommendations[0].drugId];
-        const funding = evaluateFunding(selectedOrganism, selectedResistance, recommendations[0].drugId, hasAntibiogram);
+        const funding = evaluateFunding(selectedOrganism, selectedResistance, recommendations[0].drugId, antibiogramData);
 
         this.state.result = {
           meets: funding.meets,
@@ -798,32 +798,28 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
     const meetsText = result.meets ? 'CUMPLE CRITERIOS' : 'NO CUMPLE CRITERIOS';
     const meetsIcon = result.meets ? '✓' : '✗';
 
-    // Contraindication or Non-Recommended Alert
-    let contraindicationAlert = '';
-    const isNotRecommended = !result.meets && !result.funding?.contraindication;
-    
-    if (result.funding?.contraindication || isNotRecommended) {
-      let reason = result.funding?.contraindication;
-      
-      if (isNotRecommended) {
-        // Build a helpful explanation for "Not Recommended SMS"
-        const fundingNote = result.drug?.funding ? `<br><strong>Nota de Financiación:</strong> ${result.drug.funding}` : '';
-        const altNote = result.allRecommendations?.[0] ? `<br><strong>Opción preferente SMS:</strong> ${DRUGS[result.allRecommendations[0].drugId].abbr}` : '';
-        reason = `Este fármaco no es la opción de elección para el perfil de resistencia seleccionado según el protocolo SMS vigente.${fundingNote}${altNote}`;
-      }
-
-      contraindicationAlert = `
+    // Incongruity Alert
+    let incongruityAlert = '';
+    if (result.funding?.incongruities && result.funding.incongruities.length > 0) {
+      incongruityAlert = `
         <div class="alert alert-danger mb-lg" style="border-left: 5px solid var(--danger-600); background: var(--danger-50);">
           <div style="display:flex; align-items:center; gap:var(--space-sm); margin-bottom: var(--space-xs);">
             <span style="font-size:1.5rem;">${ICONS.alertTriangle}</span>
-            <strong style="text-transform: uppercase; letter-spacing: 0.5px;">Justificación Clínica / Restricción:</strong>
+            <strong style="text-transform: uppercase; letter-spacing: 0.5px;">Alerta de Incongruencia Fenotípica:</strong>
           </div>
-          <p style="margin-top:var(--space-xs); margin-left:2.2rem; font-size: 0.95rem; line-height: 1.5; color: var(--danger-700);">
-            ${reason}
+          <ul style="margin-top:var(--space-xs); margin-left:2.2rem; font-size: 0.95rem; line-height: 1.5; color: var(--danger-700);">
+            ${result.funding.incongruities.map(inc => `<li>${inc}</li>`).join('')}
+          </ul>
+          <p style="margin-top:var(--space-sm); margin-left:2.2rem; font-size: 0.85rem; font-style:italic;">
+            Nota: Revisa los datos del antibiograma o el mecanismo de resistencia seleccionado.
           </p>
         </div>
       `;
     }
+
+    // Contraindication or Non-Recommended Alert
+    let contraindicationAlert = '';
+    const isNotRecommended = !result.meets && !result.funding?.contraindication && !(result.funding?.incongruities?.length > 0);
 
     // Site Warning Alert
     let siteWarningAlert = '';
