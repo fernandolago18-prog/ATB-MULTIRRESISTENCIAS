@@ -1103,6 +1103,11 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
           <input type="date" class="form-input" id="ps-birthdate" />
         </div>
 
+        <div class="form-group">
+          <label class="form-label">Unidad / Servicio (en MAYÚSCULAS)</label>
+          <input type="text" class="form-input" id="ps-unit" placeholder="Ej: UCI, MEDICINA INTERNA, URGENCIAS" style="text-transform:uppercase;" />
+        </div>
+
         <div class="pseudonym-result-box" id="ps-result-area" style="display:none;">
           <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:var(--space-xs);">ID PSEUDONIMIZADO GENERADO</div>
           <div id="ps-generated-id" style="font-family:var(--font-mono); font-size:1.25rem; font-weight:800; color:var(--primary); letter-spacing:1px;"></div>
@@ -1128,13 +1133,15 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
     const onGenerate = () => {
       const initials = inputInitials.value.trim();
       const birthdate = inputBirth.value;
+      const unit = document.getElementById('ps-unit').value.trim().toUpperCase();
 
-      if (!initials || !birthdate) {
-        showToast('Introduce iniciales y fecha de nacimiento', 'error');
+      if (!initials || !birthdate || !unit) {
+        showToast('Introduce iniciales, fecha y unidad', 'error');
         return;
       }
 
       generatedId = generatePatientId(initials, birthdate);
+      this.state.currentUnit = unit; // Temporary store unit
       resultText.innerText = generatedId;
       resultArea.style.display = 'block';
       btnConfirm.disabled = false;
@@ -1174,6 +1181,7 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
       date: new Date().toISOString(),
       result: result.meets ? 'CUMPLE' : 'NO_CUMPLE',
       patientId: patientId,
+      unit: this.state.currentUnit || 'N/A',
       drugId: result.drug?.id || null,
       drugName: result.drug?.abbr || 'N/A',
       drugFullName: result.drug?.name || 'N/A',

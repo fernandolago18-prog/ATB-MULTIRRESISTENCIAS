@@ -13,6 +13,7 @@ const CHART_OPTIONS = [
   { id: 'monthly-total', label: `Consultas por Mes`, icon: ICONS.calendar },
   { id: 'by-organism', label: `Distribución por Microorganismo`, icon: ICONS.bug },
   { id: 'by-drug', label: `Uso de Fármacos`, icon: ICONS.pill },
+  { id: 'by-unit', label: `Uso por Unidad/Servicio`, icon: ICONS.mapPin },
   { id: 'by-resistance', label: `Mecanismo de Resistencia`, icon: ICONS.dna },
   { id: 'by-site', label: `Localización de Infección`, icon: ICONS.mapPin }
 ];
@@ -278,6 +279,25 @@ export class DashboardTab {
             borderRadius: 6
           }]
         };
+        break;
+
+      case 'by-unit':
+        const unitData = {};
+        this.allRecords.forEach(r => {
+          const key = r.unit || 'N/A';
+          unitData[key] = (unitData[key] || 0) + 1;
+        });
+        data = {
+          labels: Object.keys(unitData),
+          datasets: [{
+            label: 'Consultas por Unidad',
+            data: Object.values(unitData),
+            backgroundColor: Object.keys(unitData).map((_, i) => PROFESSIONAL_PALETTE[(i + 8) % PROFESSIONAL_PALETTE.length]),
+            borderRadius: 6,
+            barThickness: 30
+          }]
+        };
+        options.indexAxis = 'y';
         break;
     }
 

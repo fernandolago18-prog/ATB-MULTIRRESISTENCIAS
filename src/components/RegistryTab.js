@@ -118,6 +118,7 @@ export class RegistryTab {
     const rows = records.map(r => ({
       'Fecha/Hora': new Date(r.date).toLocaleString(),
       'Paciente ID': r.patientId,
+      'Unidad/Servicio': r.unit || 'N/A',
       'Resultado': r.result,
       'Fármaco (Abbr)': r.drugName,
       'Fármaco (Completo)': r.drugFullName,
@@ -278,6 +279,10 @@ export class RegistryTab {
           <div class="dosing-item">
             <div class="dosing-item-label">Resistencia</div>
             <div class="dosing-item-value">${r.resistanceName}</div>
+          </div>
+          <div class="dosing-item">
+            <div class="dosing-item-label">Unidad / Servicio</div>
+            <div class="dosing-item-value" style="color:var(--primary-700); font-weight:700;">${r.unit || 'N/A'}</div>
           </div>
         </div>
 
