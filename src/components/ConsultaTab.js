@@ -803,15 +803,15 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
     let incongruityAlert = '';
     if (result.funding?.incongruities && result.funding.incongruities.length > 0) {
       incongruityAlert = `
-        <div class="alert alert-danger mb-lg" style="border-left: 5px solid var(--danger-600); background: var(--danger-50);">
-          <div style="display:flex; align-items:center; gap:var(--space-sm); margin-bottom: var(--space-xs);">
-            <span style="font-size:1.5rem;">${ICONS.alertTriangle}</span>
-            <strong style="text-transform: uppercase; letter-spacing: 0.5px;">Alerta de Incongruencia Fenotípica:</strong>
+        <div class="alert alert-danger mb-lg" style="border-left: 5px solid var(--danger-600); background: var(--danger-50); flex-direction: column; align-items: flex-start;">
+          <div style="display:flex; align-items:flex-start; gap:var(--space-sm); margin-bottom: var(--space-xs); width: 100%;">
+            <span style="font-size:1.5rem; flex-shrink: 0;">${ICONS.alertTriangle}</span>
+            <strong style="text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3;">Alerta de Incongruencia Fenotípica:</strong>
           </div>
-          <ul style="margin-top:var(--space-xs); margin-left:2.2rem; font-size: 0.95rem; line-height: 1.5; color: var(--danger-700);">
+          <ul style="margin-top:var(--space-xs); margin-left: 1.5rem; padding-left: 1rem; font-size: 0.95rem; line-height: 1.5; color: var(--danger-700);">
             ${result.funding.incongruities.map(inc => `<li>${inc}</li>`).join('')}
           </ul>
-          <p style="margin-top:var(--space-sm); margin-left:2.2rem; font-size: 0.85rem; font-style:italic;">
+          <p style="margin-top:var(--space-sm); margin-left: 1.5rem; font-size: 0.85rem; font-style:italic;">
             Nota: Revisa los datos del antibiograma o el mecanismo de resistencia seleccionado.
           </p>
         </div>
