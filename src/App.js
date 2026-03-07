@@ -85,21 +85,6 @@ export class App {
             </div>
           </div>
           
-          <nav class="nav-tabs" id="nav-tabs">
-            <button class="nav-tab active" data-tab="consulta">
-              <span class="nav-tab-icon">${ICONS.stethoscope}</span>
-              Consulta
-            </button>
-            <button class="nav-tab" data-tab="registro">
-              <span class="nav-tab-icon">${ICONS.clipboard}</span>
-              Registro
-            </button>
-            <button class="nav-tab" data-tab="dashboard">
-              <span class="nav-tab-icon">${ICONS.barChart}</span>
-              Dashboard
-            </button>
-          </nav>
-
           <div class="user-profile">
             <div class="user-info">
               <div class="user-email">${this.user.email}</div>
@@ -110,6 +95,22 @@ export class App {
           </div>
         </div>
       </header>
+      
+      <nav class="nav-tabs" id="nav-tabs">
+        <button class="nav-tab active" data-tab="consulta">
+          <span class="nav-tab-icon">${ICONS.stethoscope}</span>
+          Consulta
+        </button>
+        <button class="nav-tab" data-tab="registro">
+          <span class="nav-tab-icon">${ICONS.clipboard}</span>
+          Registro
+        </button>
+        <button class="nav-tab" data-tab="dashboard">
+          <span class="nav-tab-icon">${ICONS.barChart}</span>
+          Dashboard
+        </button>
+      </nav>
+
       <main class="main-content">
         <div id="tab-consulta" class="tab-content active"></div>
         <div id="tab-registro" class="tab-content"></div>

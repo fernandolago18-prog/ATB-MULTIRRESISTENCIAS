@@ -425,7 +425,7 @@ export class ConsultaTab {
           </div>
         </div>
 
-        <div class="flex gap-md mb-lg">
+        <div class="form-grid-2 mb-lg">
           <button class="btn ${this.state.antibiogramMode === 'manual' ? 'btn-primary' : 'btn-secondary'}" id="btn-antibiogram-manual">
             ${ICONS.settings} Entrada manual
           </button>

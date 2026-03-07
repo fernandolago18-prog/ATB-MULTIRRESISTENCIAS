@@ -31,11 +31,11 @@ export class RegistryTab {
           <h2>${ICONS.clipboard} Registro de Intervenciones</h2>
           <p class="text-sm text-muted">Historial completo de evaluaciones y cumplimiento BIFIMED / SMS</p>
         </div>
-        <div class="flex gap-md">
-          <div class="form-group" style="margin-bottom:0;">
-            <input type="text" class="form-input" id="registry-search" placeholder="Buscar por fármaco, paciente..." style="width:280px;" />
+        <div class="flex gap-md" style="flex-wrap:wrap; width:100%; max-width:450px;">
+          <div class="form-group" style="margin-bottom:0; flex:1; min-width:200px;">
+            <input type="text" class="form-input" id="registry-search" placeholder="Buscar por fármaco, paciente..." style="width:100%;" />
           </div>
-          <button class="btn btn-secondary" id="btn-export">${ICONS.download} Exportar a Excel</button>
+          <button class="btn btn-secondary" id="btn-export" style="flex-shrink:0;">${ICONS.download} Exportar a Excel</button>
         </div>
       </div>
 

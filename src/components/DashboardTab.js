@@ -138,7 +138,7 @@ export class DashboardTab {
                 <div class="card-subtitle">Cruza datos para identificar patrones de resistencia</div>
               </div>
             </div>
-            <select class="form-select" id="explorer-org-filter" style="width:200px;">
+            <select class="form-select" id="explorer-org-filter" style="width:100%; max-width:250px;">
               <option value="all">Todos los microorganismos</option>
               ${Object.keys(this.stats.byOrganism).map(o => `<option value="${o}" ${this.explorerFilter === o ? 'selected' : ''}>${o}</option>`).join('')}
             </select>

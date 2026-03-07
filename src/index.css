@@ -243,6 +243,16 @@ h3 {
   padding: 3px;
 }
 
+@media (min-width: 769px) {
+  .nav-tabs {
+    position: fixed;
+    top: 13px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 105;
+  }
+}
+
 .nav-tab {
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-full);
