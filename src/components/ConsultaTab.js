@@ -751,12 +751,40 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
     const meetsText = result.meets ? 'CUMPLE CRITERIOS' : 'NO CUMPLE CRITERIOS';
     const meetsIcon = result.meets ? '✓' : '✗';
 
+    // Contraindication Alert
+    let contraindicationAlert = '';
+    if (result.funding?.contraindication) {
+      contraindicationAlert = `
+        <div class="alert alert-danger mb-lg">
+          <div style="display:flex; align-items:center; gap:var(--space-sm);">
+            <span style="font-size:1.5rem;">${ICONS.alertTriangle}</span>
+            <strong>CONTRAINDICACIÓN / INACTIVIDAD:</strong>
+          </div>
+          <p style="margin-top:var(--space-xs); margin-left:2.2rem;">${result.funding.contraindication}</p>
+        </div>
+      `;
+    }
+
+    // Site Warning Alert
+    let siteWarningAlert = '';
+    if (result.recommendation?.siteWarning) {
+      siteWarningAlert = `
+        <div class="alert alert-warning mb-lg">
+          <div style="display:flex; align-items:center; gap:var(--space-sm);">
+            <span>${ICONS.alertTriangle}</span>
+            <strong>AVISO DE INDICACIÓN:</strong>
+          </div>
+          <p style="margin-top:var(--space-xs); margin-left:1.8rem;">${result.recommendation.siteWarning}</p>
+        </div>
+      `;
+    }
+
     let drugInfo = '';
     if (result.drug) {
       drugInfo = `
         <div class="dosing-card">
           <h3 style="margin-bottom: var(--space-md);">${ICONS.pill} ${result.drug.abbr} — ${result.drug.name}</h3>
-          ${result.recommendation ? `<p style="color:var(--text-secondary); margin-bottom:var(--space-md);">${result.recommendation.rationale}</p>` : ''}
+          ${result.recommendation ? `<p style="color:var(--text-secondary); margin-bottom:var(--space-md); font-weight:500;">${result.recommendation.rationale}</p>` : ''}
           
           <div class="dosing-grid">
             ${result.drug.standardDose.loading ? `
@@ -799,19 +827,21 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
 
     // Alternative recommendations
     let alternatives = '';
-    if (result.allRecommendations.length > 1) {
-      const alts = result.allRecommendations
-        .filter(r => r.drugId !== result.drug?.id)
-        .map(r => {
+    if (result.allRecommendations.length > 0) {
+      const filteredAlts = result.allRecommendations.filter(r => r.drugId !== result.drug?.id);
+      if (filteredAlts.length > 0) {
+        const alts = filteredAlts.map(r => {
           const d = DRUGS[r.drugId];
           return `<li style="padding: var(--space-xs) 0; color: var(--text-secondary);">
-            <strong>${d.abbr}</strong> — ${r.rationale} ${r.priority === 1 ? '(1ª línea)' : '(alternativa)'}
+            <strong style="color:var(--slate-800);">${d.abbr}</strong> — ${r.rationale} 
+            <span class="badge ${r.priority === 1 ? 'badge-success' : 'badge-secondary'}" style="font-size:0.7rem; margin-left:var(--space-xs);">
+              ${r.priority === 1 ? 'Elección' : 'Alternativa'}
+            </span>
           </li>`;
         }).join('');
 
-      if (alts) {
         alternatives = `
-          <div class="section-divider">Alternativas terapéuticas</div>
+          <div class="section-divider">Otras opciones recomendadas</div>
           <ul class="result-criteria">${alts}</ul>
         `;
       }
@@ -819,8 +849,8 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
 
     // Funding criteria display
     const criteriaItems = [
-      ...result.funding.criteria.map(c => `<li style="color:var(--success-text);">${c}</li>`),
-      ...result.funding.missing.map(m => `<li style="color:var(--danger-text);">${m}</li>`)
+      ...result.funding.criteria.map(c => `<li style="color:var(--success-text); font-weight:500;">${c}</li>`),
+      ...result.funding.missing.map(m => `<li style="color:var(--danger-text); font-weight:500;">${m}</li>`)
     ].join('');
 
     section.innerHTML = `
@@ -830,7 +860,10 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
           ${meetsText}
         </div>
 
-        <div class="section-divider">Criterios de Financiación (BIFIMED)</div>
+        ${contraindicationAlert}
+        ${siteWarningAlert}
+
+        <div class="section-divider">Evaluación de Criterios (BIFIMED / SMS)</div>
         <ul class="result-criteria">${criteriaItems}</ul>
 
         ${drugInfo}
@@ -989,26 +1022,150 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
       return;
     }
 
-    const adjusted = getRenalAdjustedDose(this.state.result.drug.id, this.state.clCr);
+    const drug = this.state.result.drug;
+    const adjusted = getRenalAdjustedDose(drug.id, this.state.clCr);
     if (!adjusted) return;
 
+    const needsAdjustment = this.state.clCr < (drug.renalAdjustment?.normal?.threshold || 50);
+
     container.innerHTML = `
-      <div class="renal-adjusted-dose">
-        <div class="dosing-item-label">Ajuste renal — ${adjusted.tier}</div>
-        <div class="dosing-item-value" style="margin-top:var(--space-xs);">${adjusted.dose}</div>
-        ${adjusted.infusion ? `<div style="font-size:0.85rem; color:var(--text-secondary); margin-top:var(--space-xs);">Infusión: ${adjusted.infusion}</div>` : ''}
-        ${adjusted.notes ? `<div style="font-size:0.85rem; color:var(--warning-text); margin-top:var(--space-xs);">⚠️ ${adjusted.notes}</div>` : ''}
+      <div class="renal-adjusted-box ${needsAdjustment ? 'needs-adjustment' : ''}">
+        ${needsAdjustment ? `
+          <div class="alert alert-danger" style="margin-bottom:var(--space-md); border-left:4px solid var(--danger-text);">
+            <div style="font-weight:700; display:flex; align-items:center; gap:var(--space-xs);">
+              <span>${ICONS.alertTriangle}</span> AJUSTE DE DOSIS REQUERIDO
+            </div>
+            <div style="font-size:0.85rem; margin-top:2px;">El filtrado glomerular (${this.state.clCr} mL/min) es inferior al umbral del fármaco.</div>
+          </div>
+        ` : `
+          <div class="alert alert-success" style="margin-bottom:var(--space-md); border-left:4px solid var(--success-text);">
+            <div style="font-weight:700;">${ICONS.checkCircle} FUNCIÓN RENAL NORMAL</div>
+            <div style="font-size:0.85rem; margin-top:2px;">No se requiere ajuste de dosis para este nivel de filtrado.</div>
+          </div>
+        `}
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-md);">
+          <div class="pauta-compare">
+            <div class="pauta-label">Pauta Estándar</div>
+            <div class="pauta-value standard">${drug.standardDose.maintenance}</div>
+            <div class="pauta-notes">Filt. >${drug.renalAdjustment?.normal?.threshold || 50} mL/min</div>
+          </div>
+          <div class="pauta-compare">
+            <div class="pauta-label">Pauta Recomendada</div>
+            <div class="pauta-value adjusted">${adjusted.dose}</div>
+            <div class="pauta-notes">${adjusted.tier}</div>
+          </div>
+        </div>
+
+        ${adjusted.loading ? `
+          <div style="margin-top:var(--space-md); padding-top:var(--space-sm); border-top:1px dashed var(--slate-300);">
+            <div class="pauta-label">Dosis de Carga (Ajustada)</div>
+            <div style="font-weight:700; color:var(--danger-text);">${adjusted.loading}</div>
+          </div>
+        ` : ''}
+
+        ${adjusted.notes || adjusted.infusion ? `
+          <div class="mt-md pauta-clinical-notes">
+            <strong>Notas clínicas:</strong> ${adjusted.infusion ? `Infusión de ${adjusted.infusion}. ` : ''} ${adjusted.notes || ''}
+          </div>
+        ` : ''}
       </div>
     `;
   }
 
   // ======================================================================
-  // SAVE RECORD
+  // SAVE & PSEUDONYMIZATION
   // ======================================================================
-  async saveCurrentRecord() {
-    const { result, selectedOrganism, selectedResistance, selectedSite, kpcContext, antibiogramData } = this.state;
+  showPseudonymizerModal() {
+    const { result } = this.state;
     if (!result) return;
 
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal pseudonym-modal" style="max-width:500px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
+          <h3 style="margin:0;">${ICONS.lock} Pseudonimización del Paciente</h3>
+          <button class="btn-close" id="btn-modal-close" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+        </div>
+        
+        <div class="alert alert-warning mb-lg" style="font-size:0.85rem;">
+          <strong>AVISO DE SEGURIDAD (GDPR):</strong> No introduzcas el nombre, apellidos, DNI ni NHC del paciente. Genera un identificador pseudonimizado para el registro clínico.
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Iniciales (2-3 letras)</label>
+          <input type="text" class="form-input" id="ps-initials" placeholder="Ej: FGM" maxlength="3" style="text-transform:uppercase;" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Fecha de Nacimiento</label>
+          <input type="date" class="form-input" id="ps-birthdate" />
+        </div>
+
+        <div class="pseudonym-result-box" id="ps-result-area" style="display:none;">
+          <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:var(--space-xs);">ID PSEUDONIMIZADO GENERADO</div>
+          <div id="ps-generated-id" style="font-family:var(--font-mono); font-size:1.25rem; font-weight:800; color:var(--primary); letter-spacing:1px;"></div>
+        </div>
+
+        <div class="modal-actions mt-xl">
+          <button class="btn btn-secondary" id="btn-ps-generate">${ICONS.refresh} Generar Código</button>
+          <button class="btn btn-success" id="btn-ps-confirm" disabled>${ICONS.save} Confirmar y Guardar Registro</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const inputInitials = document.getElementById('ps-initials');
+    const inputBirth = document.getElementById('ps-birthdate');
+    const btnGenerate = document.getElementById('btn-ps-generate');
+    const btnConfirm = document.getElementById('btn-ps-confirm');
+    const resultArea = document.getElementById('ps-result-area');
+    const resultText = document.getElementById('ps-generated-id');
+
+    let generatedId = null;
+
+    const onGenerate = () => {
+      const initials = inputInitials.value.trim();
+      const birthdate = inputBirth.value;
+
+      if (!initials || !birthdate) {
+        showToast('Introduce iniciales y fecha de nacimiento', 'error');
+        return;
+      }
+
+      generatedId = generatePatientId(initials, birthdate);
+      resultText.innerText = generatedId;
+      resultArea.style.display = 'block';
+      btnConfirm.disabled = false;
+      showToast('Código generado correctamente', 'success');
+    };
+
+    btnGenerate.addEventListener('click', onGenerate);
+
+    btnConfirm.addEventListener('click', async () => {
+      if (!generatedId) return;
+      
+      btnConfirm.disabled = true;
+      btnConfirm.innerHTML = `<span class="spinner" style="width:16px; height:16px;"></span> Guardando...`;
+
+      try {
+        await this.performFinalSave(generatedId);
+        overlay.remove();
+        this.renderEntryScreen(); // Reset after save
+      } catch (err) {
+        btnConfirm.disabled = false;
+        btnConfirm.innerHTML = `${ICONS.save} Confirmar y Guardar Registro`;
+      }
+    });
+
+    document.getElementById('btn-modal-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  }
+
+  async performFinalSave(patientId) {
+    const { result, selectedOrganism, selectedResistance, selectedSite, kpcContext, antibiogramData, clCr, eGFR, creatinine, age, sex, showRenal } = this.state;
+    
     const organism = ORGANISMS[selectedOrganism];
     const resistance = RESISTANCE_MECHANISMS[selectedResistance];
     const site = INFECTION_SITES[selectedSite];
@@ -1016,6 +1173,7 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
     const record = {
       date: new Date().toISOString(),
       result: result.meets ? 'CUMPLE' : 'NO_CUMPLE',
+      patientId: patientId,
       drugId: result.drug?.id || null,
       drugName: result.drug?.abbr || 'N/A',
       drugFullName: result.drug?.name || 'N/A',
@@ -1027,29 +1185,29 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
       siteName: site?.name || 'N/A',
       kpcContext: kpcContext,
       dose: result.drug?.standardDose?.maintenance || 'N/A',
-      renalAdjusted: this.state.showRenal,
-      clCr: this.state.clCr,
-      eGFR: this.state.eGFR,
-      creatinine: this.state.creatinine,
-      patientAge: this.state.age,
-      patientSex: this.state.sex,
+      renalAdjusted: showRenal,
+      clCr: clCr,
+      eGFR: eGFR,
+      creatinine: creatinine,
+      patientAge: age,
+      patientSex: sex,
       antibiogram: antibiogramData.filter(r => r.antibiotic && r.sir),
       criteria: [...(result.funding?.criteria || []), ...(result.funding?.missing || [])],
       rationale: result.recommendation?.rationale || ''
     };
 
     try {
-      // Non-blocking save
-      saveRecord(record).then(() => {
-        if (this.onSave) this.onSave(record);
-      }).catch(err => {
-        console.error('Save error:', err);
-        showToast('Error al guardar', 'error');
-      });
-
-      showToast('Registro guardado correctamente', 'success');
+      await saveRecord(record);
+      if (this.onSave) this.onSave(record);
+      showToast('Registro guardado y pseudonimizado correctamente', 'success');
     } catch (err) {
-      showToast('Error al guardar', 'error');
+      console.error('Final save error:', err);
+      showToast('Error al guardar en el servidor', 'error');
+      throw err;
     }
+  }
+
+  async saveCurrentRecord() {
+    this.showPseudonymizerModal();
   }
 }
