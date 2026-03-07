@@ -3,6 +3,8 @@
 // Complete decision tree from SMS Consensus on New Antimicrobials (2026)
 // ============================================================================
 
+import { ICONS } from '../icons.js';
+
 export const DRUGS = {
     'ATM_AVI': {
         id: 'ATM_AVI',
