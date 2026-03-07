@@ -402,14 +402,33 @@ export function evaluateFunding(organismId, resistanceId, drugId, antibiogramDat
         clinicalAnalysis = `El espectro de actividad de ${drug.name} NO incluye de forma fiable a ${organism?.name || organismId}. Se desaconseja su uso empírico o dirigido.`;
     } else if (!isRecommended) {
         isSuitable = false;
-        clinicalAnalysis = `Según las directrices del SMS, ${drug.name} NO es una indicación óptima para una infección por ${organism?.name} productor de ${RESISTANCE_MECHANISMS[resistanceId]?.name}. Las alternativas recomendadas tienen mejor perfil de eficacia o seguridad.`;
+
+        // Contraindicaciones bioquímicas absolutas basadas en el mecanismo
+        let specificReason = '';
+        if (resistanceId === 'MBL' && ['CAZ_AVI', 'MERO_VABOR', 'IMI_REL', 'CTZ_TAZ', 'CFP_ETZ'].includes(drugId)) {
+            specificReason = `Las Metalo-beta-lactamasas (Ambler B) hidrolizan ${drug.name} y sus inhibidores no tienen actividad frente a ellas.`;
+        } else if (resistanceId === 'OXA_48' && ['MERO_VABOR', 'IMI_REL', 'CTZ_TAZ'].includes(drugId)) {
+            specificReason = `La carbapenemasa OXA-48 (Ambler D) no es inhibida por Vaborbactam, Relebactam ni Tazobactam.`;
+        } else if (resistanceId === 'KPC' && ['CTZ_TAZ', 'CFP_ETZ'].includes(drugId)) {
+            specificReason = `Las carbapenemasas KPC (Ambler A) no son inhibidas adecuadamente por Tazobactam ni Enmetazobactam.`;
+        } else if (organismId === 'S_maltophilia' && ['CAZ_AVI', 'MERO_VABOR', 'IMI_REL', 'CTZ_TAZ', 'CFP_ETZ'].includes(drugId)) {
+            specificReason = `S. maltophilia codifica intrínsecamente la enzima L1 (una MBL) que destruye este fármaco de forma natural.`;
+        } else if (organismId === 'A_baumannii' && ['ATM_AVI', 'CAZ_AVI', 'MERO_VABOR', 'IMI_REL', 'CTZ_TAZ', 'CFP_ETZ'].includes(drugId)) {
+            specificReason = `A. baumannii suele poseer oxacilinasas intrínsecas (ej. OXA-23/51) y mecanismos de impermeabilidad que anulan la eficacia de este fármaco.`;
+        }
+        
+        if (specificReason) {
+             clinicalAnalysis = `CONTRAINDICACIÓN BIOLÓGICA: ${specificReason} No es una opción terapéutica válida.`;
+        } else {
+             clinicalAnalysis = `Según las directrices del SMS, ${drug.name} NO es una indicación óptima para una infección por ${organism?.name} productor de ${RESISTANCE_MECHANISMS[resistanceId]?.name}. Las alternativas recomendadas tienen mejor perfil de eficacia o seguridad.`;
+        }
     } else {
         clinicalAnalysis = `JUSTIFICACIÓN: ${matchedRec.rationale}`;
     }
     
     if (!isSensitive) {
         isSuitable = false;
-        clinicalAnalysis += ` ADVERTENCIA CRÍTICA: El antibiograma muestra RESISTENCIA a este fármaco. Su uso clínico está absolutamente contraindicado.`;
+        clinicalAnalysis += ` ADVERTENCIA CRÍTICA: El antibiograma muestra RESISTENCIA IN VITRO a este fármaco. Su uso clínico está absolutamente contraindicado.`;
     }
 
     const meets = isSuitable && isSensitive && incongruities.length === 0;
