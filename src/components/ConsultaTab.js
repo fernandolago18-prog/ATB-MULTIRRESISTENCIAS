@@ -451,19 +451,21 @@ export class ConsultaTab {
     `).join('');
 
     content.innerHTML = `
-      <table class="antibiogram-table">
-        <thead>
-          <tr>
-            <th>Antibiótico</th>
-            <th>CMI (mg/L)</th>
-            <th>Categoría</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="antibiogram-tbody">
-          ${tableRows}
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="antibiogram-table">
+          <thead>
+            <tr>
+              <th>Antibiótico</th>
+              <th>CMI (mg/L)</th>
+              <th>Categoría</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="antibiogram-tbody">
+            ${tableRows}
+          </tbody>
+        </table>
+      </div>
       <button class="btn btn-secondary btn-sm mt-md" id="btn-add-row">+ Añadir fila</button>
     `;
 
@@ -503,9 +505,9 @@ export class ConsultaTab {
     content.innerHTML = `
       <div class="upload-zone" id="upload-zone">
         <div class="upload-zone-icon">${ICONS.camera}</div>
-        <div class="upload-zone-text">Arrastra una imagen del antibiograma aquí o haz clic para seleccionar</div>
-        <div class="upload-zone-hint">Formatos: JPG, PNG, WEBP — Se procesará con Gemini AI</div>
-        <input type="file" id="antibiogram-file" accept="image/*" style="display:none" />
+        <div class="upload-zone-text">Capturar o Subir Antibiograma</div>
+        <div class="upload-zone-hint">Haz una foto directamente o sube un pantallazo</div>
+        <input type="file" id="antibiogram-file" accept="image/*" capture="environment" style="display:none" />
       </div>
       <div id="upload-preview-area"></div>
       <div id="gemini-status"></div>
@@ -1173,6 +1175,10 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
   async performFinalSave(patientId) {
     const { result, selectedOrganism, selectedResistance, selectedSite, kpcContext, antibiogramData, clCr, eGFR, creatinine, age, sex, showRenal } = this.state;
     
+    // Get current authenticated user
+    const { data: { user } } = await import('../data/supabaseClient.js').then(m => m.supabase.auth.getUser());
+    const userEmail = user?.email || 'Usuario anónimo';
+
     const organism = ORGANISMS[selectedOrganism];
     const resistance = RESISTANCE_MECHANISMS[selectedResistance];
     const site = INFECTION_SITES[selectedSite];
@@ -1182,6 +1188,7 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
       result: result.meets ? 'CUMPLE' : 'NO_CUMPLE',
       patientId: patientId,
       unit: this.state.currentUnit || 'N/A',
+      createdBy: userEmail, // New audit field
       drugId: result.drug?.id || null,
       drugName: result.drug?.abbr || 'N/A',
       drugFullName: result.drug?.name || 'N/A',

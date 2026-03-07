@@ -1377,6 +1377,10 @@ textarea.form-input {
     justify-content: center;
   }
 
+  .app-logo-subtitle {
+    display: none; /* Hide subtitle on mobile header */
+  }
+
   .user-profile {
     position: absolute;
     right: var(--space-md);
@@ -1395,7 +1399,7 @@ textarea.form-input {
     left: 0;
     right: 0;
     background: white;
-    padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom));
+    padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom, 16px));
     border-top: 1px solid var(--slate-200);
     border-radius: 0;
     justify-content: space-around;
@@ -1404,16 +1408,18 @@ textarea.form-input {
   }
 
   .nav-tab {
+    flex: 1;
     flex-direction: column;
     gap: 4px;
-    padding: var(--space-sm);
+    padding: var(--space-sm) 4px;
     font-size: 0.7rem;
     background: transparent !important;
     box-shadow: none !important;
+    min-height: 48px; /* Standard touch target height */
   }
 
   .nav-tab-icon {
-    font-size: 1.25rem;
+    font-size: 1.4rem;
   }
 
   .nav-tab.active {
@@ -1422,7 +1428,7 @@ textarea.form-input {
 
   /* Main content padding for bottom nav */
   .main-content {
-    padding: var(--space-lg) var(--space-md) 100px;
+    padding: var(--space-lg) var(--space-md) calc(100px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Entry cards stack */
@@ -1435,7 +1441,34 @@ textarea.form-input {
     padding: var(--space-xl);
   }
 
-  /* Tables to Cards on Mobile */
+  /* Responsive Table Container */
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--slate-200);
+  }
+
+  .table-responsive table {
+    margin-top: 0;
+    border: none;
+    min-width: 500px; /* Ensure content doesn't squash too much */
+  }
+
+  /* Specific adjustment for antibiogram on mobile */
+  .antibiogram-table td {
+    padding: var(--space-sm) var(--space-xs);
+  }
+
+  .antibiogram-table input, 
+  .antibiogram-table select {
+    min-height: 40px; /* Better tap target */
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+
+  /* Tables to Cards on Mobile (Registry) */
   .registry-table thead {
     display: none;
   }
@@ -1452,12 +1485,24 @@ textarea.form-input {
     padding: var(--space-md);
     background: white;
     position: relative;
+    box-shadow: var(--shadow-sm);
   }
 
   .registry-table td {
     border: none;
     padding: var(--space-xs) 0;
     text-align: left !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .registry-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--slate-500);
+    font-size: 0.75rem;
+    text-transform: uppercase;
   }
 
   .registry-table td:last-child {
@@ -1467,6 +1512,10 @@ textarea.form-input {
     margin-top: var(--space-sm);
     border-top: 1px solid var(--slate-100);
     padding-top: var(--space-sm);
+  }
+  
+  .registry-table td:last-child::before {
+    display: none;
   }
 
   /* Dashboard adjustments */
@@ -1492,6 +1541,15 @@ textarea.form-input {
     margin-bottom: var(--space-md);
   }
 
+  .form-select, .form-input {
+    min-height: 44px; /* Standard touch target */
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+
+  .btn {
+    min-height: 44px; /* Standard touch target */
+  }
+
   .btn-lg {
     width: 100%;
   }
@@ -1503,6 +1561,10 @@ textarea.form-input {
 
   .dosing-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .renal-section .toggle-wrapper {
+    padding: var(--space-sm) 0;
   }
 }
 
@@ -1645,4 +1707,17 @@ textarea.form-input {
 
 .w-full {
   width: 100%;
+}
+
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-xl);
+}
+
+@media (max-width: 768px) {
+  .responsive-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
 }

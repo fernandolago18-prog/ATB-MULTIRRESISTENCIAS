@@ -366,7 +366,7 @@ export class DashboardTab {
     const topRes = Object.entries(resDistribution).sort((a, b) => b[1] - a[1])[0];
 
     container.innerHTML = `
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-xl);">
+      <div class="responsive-grid">
         <div>
           <h4 style="margin-bottom:var(--space-md); color:var(--slate-700); border-left:3px solid var(--primary); padding-left:var(--space-sm);">Perfil de Tratamiento</h4>
           <p class="text-sm mb-md">Tratamientos más frecuentes para <strong>${this.explorerFilter === 'all' ? 'todos' : this.explorerFilter}</strong>:</p>

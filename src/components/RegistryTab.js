@@ -117,6 +117,7 @@ export class RegistryTab {
     // EXPORT ALL DATA COLUMNS
     const rows = records.map(r => ({
       'Fecha/Hora': new Date(r.date).toLocaleString(),
+      'Usuario (Facultativo)': r.createdBy || 'N/A',
       'Paciente ID': r.patientId,
       'Unidad/Servicio': r.unit || 'N/A',
       'Resultado': r.result,
@@ -167,24 +168,24 @@ export class RegistryTab {
 
     const rows = filtered.map(r => `
       <tr class="registry-row" data-id="${r.id}">
-        <td>
+        <td data-label="Fecha">
           <div class="text-xs text-muted">${new Date(r.date).toLocaleDateString()}</div>
           <div style="font-size:0.7rem;">${new Date(r.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
         </td>
-        <td>
+        <td data-label="Fármaco">
           <div style="font-weight:700; color:var(--slate-900);">${r.drugName}</div>
           <div class="text-xs text-muted">${r.drugFullName}</div>
         </td>
-        <td>
+        <td data-label="Microorganismo">
           <div style="font-weight:500;">${r.organismName}</div>
           <div class="text-xs text-muted">${r.resistanceName}</div>
         </td>
-        <td>
+        <td data-label="Resultado">
           <span class="sir-badge ${r.result === 'CUMPLE' ? 'sir-S' : 'sir-R'}" style="width:auto; padding:0 8px; height:24px; font-size:0.7rem;">
             ${r.result}
           </span>
         </td>
-        <td>
+        <td data-label="Paciente">
           <div class="font-mono text-xs" title="${r.patientId}">${(r.patientId || 'N/A').substring(0, 15)}...</div>
         </td>
         <td style="text-align:right;">
@@ -195,19 +196,21 @@ export class RegistryTab {
     `).join('');
 
     container.innerHTML = `
-      <table class="registry-table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Fármaco</th>
-            <th>Microorganismo</th>
-            <th>Resultado</th>
-            <th>Paciente (ID)</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="registry-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Fármaco</th>
+              <th>Microorganismo</th>
+              <th>Resultado</th>
+              <th>Paciente (ID)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
     `;
 
     container.querySelectorAll('.btn-delete-record').forEach(btn => {
@@ -279,6 +282,10 @@ export class RegistryTab {
           <div class="dosing-item">
             <div class="dosing-item-label">Resistencia</div>
             <div class="dosing-item-value">${r.resistanceName}</div>
+          </div>
+          <div class="dosing-item">
+            <div class="dosing-item-label">Facultativo</div>
+            <div class="dosing-item-value" style="font-size:0.8rem;">${r.createdBy || 'N/A'}</div>
           </div>
           <div class="dosing-item">
             <div class="dosing-item-label">Unidad / Servicio</div>
