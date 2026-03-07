@@ -13,7 +13,7 @@ export const ICONS = {
 
     // Clinical
     pill: svg('<path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>'),
-    bug: svg('<path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>'),
+    bug: svg('<rect x="5" y="8" width="14" height="8" rx="4"/><path d="M12 2v6"/><path d="M12 16v6"/><path d="M18 10l3-1.5"/><path d="M18 14l3 1.5"/><path d="M6 10l-3-1.5"/><path d="M6 14l-3 1.5"/><path d="M8 8l-1.5-3"/><path d="M16 8l1.5-3"/><path d="M8 16l-1.5 3"/><path d="M16 16l1.5 3"/>'),
     bugEntero: svg('<rect width="8" height="16" x="8" y="4" rx="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M5 8l3 1"/><path d="M5 15l3-1"/><path d="M19 8l-3 1"/><path d="M19 15l-3-1"/>'),
     bugPseudo: svg('<rect width="7" height="14" x="8" y="4" rx="3.5"/><path d="M11.5 2v2"/><path d="M8 18c-1 1-2 3-1 5"/><path d="M12 18c0 1 1 3 2 4"/><path d="M15 18c1 1 1 3 0 5"/><path d="M5 7l3 1"/><path d="M19 7l-3 1"/><path d="M5 12h3"/><path d="M19 12h-3"/>'),
     bugAcineto: svg('<rect width="10" height="12" x="7" y="6" rx="5"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4 12h3"/><path d="M17 12h3"/><path d="M6 7l2 2"/><path d="M18 7l-2 2"/><path d="M6 17l2-2"/><path d="M18 17l-2-2"/>'),
@@ -54,7 +54,7 @@ export const ICONS = {
 export function icon(name, size = 20) {
     const paths = {
         pill: '<path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>',
-        bug: '<path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>'
+        bug: '<rect x="5" y="8" width="14" height="8" rx="4"/><path d="M12 2v6"/><path d="M12 16v6"/><path d="M18 10l3-1.5"/><path d="M18 14l3 1.5"/><path d="M6 10l-3-1.5"/><path d="M6 14l-3-1.5"/><path d="M8 8l-1.5-3"/><path d="M16 8l1.5-3"/><path d="M8 16l-1.5 3"/><path d="M16 16l1.5 3"/>'
     };
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths[name] || ''}</svg>`;
 }

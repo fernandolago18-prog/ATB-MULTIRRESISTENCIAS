@@ -1715,9 +1715,26 @@ textarea.form-input {
   gap: var(--space-xl);
 }
 
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
 @media (max-width: 768px) {
   .responsive-grid {
     grid-template-columns: 1fr;
     gap: var(--space-lg);
+  }
+  
+  .form-grid-2,
+  .form-grid-3 {
+    grid-template-columns: 1fr;
   }
 }

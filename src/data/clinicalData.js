@@ -12,56 +12,145 @@ class MicrobiologyExpert {
     constructor(organismId, resistanceId, antibiogram) {
         this.org = organismId;
         this.res = resistanceId;
-        this.atb = antibiogram.map(a => ({
-            name: a.antibiotic.toLowerCase(),
-            sir: a.sir.toUpperCase(),
-            mic: a.mic
-        }));
+        // Sanitizar y validar los datos del antibiograma
+        this.atb = antibiogram
+            .filter(a => a.antibiotic && a.sir)
+            .map(a => ({
+                name: a.antibiotic.toLowerCase().trim(),
+                sir: a.sir.toUpperCase(),
+                mic: a.mic || ''
+            }));
     }
 
-    isS(names) { return this.atb.some(a => names.some(n => a.name.includes(n.toLowerCase())) && (a.sir === 'S' || a.sir === 'I')); }
-    isR(names) { return this.atb.some(a => names.some(n => a.name.includes(n.toLowerCase())) && a.sir === 'R'); }
-    getDrugsS(names) { return this.atb.filter(a => names.some(n => a.name.includes(n.toLowerCase())) && (a.sir === 'S' || a.sir === 'I')).map(a => a.name); }
+    matchDrug(atbName, targetName) {
+        const atb = atbName.toLowerCase();
+        const tgt = targetName.toLowerCase();
+        
+        // Combinación con inhibidor (ej. ceftazidima/avibactam)
+        if (tgt.includes('/')) {
+            const parts = tgt.split('/');
+            return parts.every(p => atb.includes(p.trim()));
+        }
+        
+        // Fármaco simple: asegurar que el antibiograma no tenga un inhibidor asociado
+        const inhibitors = ['clav', 'tazobactam', 'taz', 'avibactam', 'vaborbactam', 'relebactam', 'sulbactam', 'enmetazobactam'];
+        const hasInhibitor = inhibitors.some(inh => atb.includes(inh));
+        
+        if (hasInhibitor) {
+            return false; // Si busco 'meropenem', descarto 'meropenem/vaborbactam'
+        }
+        
+        return atb.includes(tgt);
+    }
+
+    isS(names) { return this.atb.some(a => names.some(n => this.matchDrug(a.name, n)) && (a.sir === 'S' || a.sir === 'I')); }
+    isR(names) { return this.atb.some(a => names.some(n => this.matchDrug(a.name, n)) && a.sir === 'R'); }
+    getDrugs(names, sirs) { return this.atb.filter(a => names.some(n => this.matchDrug(a.name, n)) && sirs.includes(a.sir)).map(a => a.name); }
 
     analyze() {
         const alerts = [];
-        const carbapenems = ['meropenem', 'imipenem', 'ertapenem'];
-        const cephs34 = ['ceftriaxona', 'cefotaxima', 'ceftazidima', 'cefepima'];
+        const carbapenems = ['meropenem', 'imipenem', 'ertapenem', 'doripenem'];
+        const cephs3 = ['ceftriaxona', 'cefotaxima', 'ceftazidima'];
+        const cephs4 = ['cefepima'];
+        const aminos = ['amikacina', 'gentamicina', 'tobramicina'];
+
+        // =========================================================================
+        // 1. REGLAS EXPERTAS INTERNACIONALES (EUCAST / CLSI): RESISTENCIAS INTRÍNSECAS
+        // =========================================================================
         
         if (this.org === 'Enterobacterales') {
-            const intrinsicR = ['proteus', 'providencia', 'morganella', 'serratia'];
-            if (intrinsicR.some(n => this.org.toLowerCase().includes(n)) || this.atb.some(a => intrinsicR.some(n => a.name.includes(n)))) {
-                if (this.isS(['colistina'])) alerts.push('ERROR BIOLÓGICO: Proteeae/Serratia son intrínsecamente resistentes a Colistina.');
-                if (this.isS(['tigeciclina'])) alerts.push('ERROR BIOLÓGICO: Proteeae son intrínsecamente resistentes a Tigeciclina.');
+            if (this.isS(['colistina']) || this.isS(['tigeciclina'])) {
+                alerts.push('REGLA EXPERTA EUCAST (Aviso Biológico): Las especies de la tribu Proteeae (Proteus, Providencia, Morganella) y Serratia spp. tienen resistencia intrínseca a Colistina. Proteeae también a Tigeciclina. Valide la especie; si pertenece a estos grupos, asuma Resistencia independientemente del antibiograma.');
             }
         }
+        
         if (this.org === 'P_aeruginosa') {
-            if (this.isS(['ertapenem', 'ceftriaxona', 'cefotaxima', 'tigeciclina'])) {
-                alerts.push('INCONGRUENCIA: P. aeruginosa es intrínsecamente resistente a Ertapenem, Cefalosporinas de 3ª (excepto Ceftazidima) y Tigeciclina.');
+            const intrinsicPse = ['ertapenem', 'ceftriaxona', 'cefotaxima', 'tigeciclina', 'ampicilina', 'amoxicilina/clav', 'cefoxitina', 'trimetoprim'];
+            if (this.isS(intrinsicPse)) {
+                const sDrugs = this.getDrugs(intrinsicPse, ['S', 'I']);
+                alerts.push(`REGLA EXPERTA EUCAST (Incongruencia Crítica): P. aeruginosa es intrínsecamente resistente a ${sDrugs.join(', ')}. Un resultado Sensible indica un error en la identificación, contaminación o fallo grave del sistema automatizado.`);
             }
         }
+        
+        if (this.org === 'A_baumannii') {
+            const intrinsicAci = ['ertapenem', 'cefotaxima', 'ceftriaxona', 'ampicilina', 'amoxicilina/clav', 'aztreonam', 'trimetoprim'];
+            if (this.isS(intrinsicAci)) {
+                const sDrugs = this.getDrugs(intrinsicAci, ['S', 'I']);
+                alerts.push(`REGLA EXPERTA EUCAST (Incongruencia Crítica): A. baumannii es intrínsecamente resistente a ${sDrugs.join(', ')}. Un reporte de Sensibilidad es biológicamente imposible.`);
+            }
+        }
+
         if (this.org === 'S_maltophilia') {
-            if (this.isS(carbapenems)) alerts.push('ERROR BIOLÓGICO: S. maltophilia posee L1/L2 (MBL/AmpC) y es siempre resistente a Carbapenémicos.');
-        }
-
-        if ((this.res === 'MBL' || this.res === 'KPC' || this.res === 'OXA_48') && this.isS(carbapenems)) {
-            const sCarbas = this.getDrugsS(carbapenems);
-            alerts.push(`ALERTA EXPERTA: Has declarado una Carbapenemasa (${this.res}) pero el antibiograma muestra sensibilidad a ${sCarbas.join(', ')}. Esto es altamente improbable.`);
-        }
-
-        if (this.res === 'BLEE_AmpC' && this.isS(cephs34)) {
-            const sCephs = this.getDrugsS(cephs34);
-            alerts.push(`INCONGRUENCIA: El mecanismo BLEE/AmpC implica resistencia a Cefalosporinas de 3ª/4ª (${sCephs.join(', ')}).`);
-        }
-
-        if (this.isR(carbapenems) && this.isS(cephs34)) {
-            alerts.push('ALERTA TÉCNICA: Resistencia a Carbapenémicos con sensibilidad a Cefalosporinas de 3ª/4ª es un fenotipo imposible (error de lectura o mecanismo atípico).');
-        }
-
-        if (this.res === 'MBL') {
-            if (this.isS(['ceftazidima/avibactam', 'meropenem/vaborbactam', 'imipenem/relebactam', 'ceftolozano/tazobactam'])) {
-                alerts.push('ALERTA CLÍNICA: Las MBL inactivan todos los nuevos β-lactámicos con inhibidores de Clase A/C. Solo Aztreonam/Avibactam o Cefiderocol son opciones viables.');
+            if (this.isS(carbapenems)) {
+                alerts.push('REGLA EXPERTA EUCAST (Incongruencia Crítica): S. maltophilia codifica cromosómicamente una Metalo-Beta-Lactamasa (L1) que hidroliza todos los carbapenémicos. Es biológicamente siempre Resistente a ellos.');
             }
+            if (this.isS(['aztreonam'])) {
+                alerts.push('REGLA EXPERTA EUCAST: S. maltophilia produce una cefalosporinasa cromosómica L2 que inactiva Aztreonam. Sensibilidad imposible.');
+            }
+        }
+
+        // =========================================================================
+        // 2. VALIDACIÓN FENOTÍPICA DE MECANISMOS DE RESISTENCIA
+        // =========================================================================
+
+        if (this.res === 'BLEE_AmpC') {
+            if (this.isS(cephs3)) {
+                const sCephs = this.getDrugs(cephs3, ['S', 'I']);
+                alerts.push(`INCONGRUENCIA FENOTÍPICA: Las enzimas BLEE/AmpC hidrolizan sistemáticamente las Cefalosporinas de 3ª generación (${sCephs.join(', ')}). Si el antibiograma muestra sensibilidad, revise si hay un efecto inóculo o error de detección (falso negativo).`);
+            }
+        }
+
+        // Carbapenemasas
+        if (this.res === 'MBL' || this.res === 'KPC' || this.res === 'OXA_48' || this.res === 'CR') {
+            
+            // Validación frente a Carbapenémicos clásicos
+            if (this.isS(carbapenems)) {
+                const sCarbas = this.getDrugs(carbapenems, ['S', 'I']);
+                if (this.res === 'OXA_48') {
+                    alerts.push(`AVISO CLÍNICO (Perfil OXA-48): Las carbapenemasas tipo OXA-48 tienen una actividad hidrolítica débil y pueden mostrar sensibilidad in vitro a carbapenémicos (${sCarbas.join(', ')}). Clínicamente NO DEBEN USARSE en monoterapia a dosis estándar por alto riesgo de fracaso.`);
+                } else {
+                    alerts.push(`INCONGRUENCIA CRÍTICA: Se ha declarado una Carbapenemasa tipo ${this.res} pero existe sensibilidad in vitro a ${sCarbas.join(', ')}. En enzimas KPC y MBL esto es excepcionalmente raro y sugiere un error de asignación de mecanismo o lectura.`);
+                }
+            }
+
+            // MBL vs Nuevos Inhibidores (Regla de ORO)
+            if (this.res === 'MBL') {
+                const classA_C_inhibitors = ['ceftazidima/avibactam', 'meropenem/vaborbactam', 'imipenem/relebactam', 'ceftolozano/tazobactam', 'cefepima/enmetazobactam'];
+                if (this.isS(classA_C_inhibitors)) {
+                    const sNew = this.getDrugs(classA_C_inhibitors, ['S', 'I']);
+                    alerts.push(`INCONGRUENCIA CRÍTICA (MBL): Las metalo-beta-lactamasas (Ambler B) NO son inhibidas por Avibactam, Vaborbactam ni Relebactam. La sensibilidad reportada a ${sNew.join(', ')} es un FALSO SENSIBLE grave del sistema automatizado.`);
+                }
+            }
+
+            // KPC
+            if (this.res === 'KPC') {
+                if (this.isS(['ceftolozano/tazobactam'])) {
+                    alerts.push(`INCONGRUENCIA CRÍTICA (KPC): KPC inactiva el Ceftolozano/Tazobactam. Un resultado Sensible es falso.`);
+                }
+                if (this.isR(['ceftazidima/avibactam'])) {
+                    alerts.push(`ALERTA PROA PREOCUPANTE: Resistencia detectada a Ceftazidima/Avibactam en presencia de KPC. Alerta de emergencia de variantes KPC mutadas (ej. KPC-31/33). Requiere confirmación molecular urgente.`);
+                }
+            }
+
+            // OXA-48 (Trampas fenotípicas)
+            if (this.res === 'OXA_48') {
+                if (this.isS(cephs3) && this.isR(carbapenems)) {
+                    alerts.push(`VALIDACIÓN EXPERTA: El fenotipo "Resistente a Carbapenémicos + Sensible a Cefalosporinas de 3ª/4ª" es perfectamente compatible con una OXA-48 pura, ya que esta enzima NO hidroliza Cefalosporinas.`);
+                } else if (this.isR(cephs3) || this.isR(cephs4)) {
+                    alerts.push(`AVISO FENOTÍPICO: OXA-48 no hidroliza Cefalosporinas. La resistencia observada a Cefalosporinas de 3ª/4ª indica co-producción de BLEE o AmpC (muy frecuente en Klebsiella pneumoniae).`);
+                }
+                if (this.isS(['meropenem/vaborbactam', 'imipenem/relebactam'])) {
+                    alerts.push(`TRAMPA IN VITRO (Incongruencia Clínica): Vaborbactam y Relebactam NO inhiben OXA-48. La sensibilidad in vitro observada frente a estos fármacos se debe a la baja CMI basal del carbapenémico, pero el inhibidor no está aportando protección. Existe riesgo de fracaso.`);
+                }
+            }
+        }
+
+        // =========================================================================
+        // 3. REGLAS BIOQUÍMICAS BÁSICAS DE ABERRACIÓN CASCADA (Tipo AES VITEK)
+        // =========================================================================
+        
+        if (this.isS(['ampicilina', 'amoxicilina', 'cefazolina']) && this.isR(cephs3)) {
+            alerts.push('REGLA BIOQUÍMICA ABERRANTE: Sensibilidad a penicilinas/cefalosporinas de 1ª generación con resistencia a Cefalosporinas de 3ª generación es enzimáticamente imposible. Sugiere un error severo en el laboratorio.');
         }
 
         return alerts;
@@ -213,56 +302,125 @@ export const KPC_CONTEXT_OPTIONS = [
 
 export function getRecommendation(organismId, resistanceId, contextId = null, siteId = null) {
     const results = [];
+    
     if (organismId === 'Enterobacterales') {
         if (resistanceId === 'MBL') {
-            results.push({ drugId: 'ATM_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN.' });
-            results.push({ drugId: 'CFD', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN (si precisa cobertura antipseudomónica).' });
+            results.push({ drugId: 'ATM_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN (BIFIMED). Aztreonam/Avibactam es estable frente a MBL, y el avibactam protege al aztreonam de BLEE o AmpC coexistentes.' });
+            results.push({ drugId: 'CFD', priority: 2, rationale: 'ALTERNATIVA. Cefiderocol evade las MBL utilizando el transporte de hierro bacteriano. Muy útil si hay co-infección con P. aeruginosa multirresistente.' });
         } else if (resistanceId === 'KPC') {
             if (contextId === 'critical') {
-                results.push({ drugId: 'MERO_VABOR', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN en paciente crítico.' });
-                results.push({ drugId: 'IMI_REL', priority: 1, rationale: 'Alternativa si precisa cobertura anaerobia.' });
+                results.push({ drugId: 'MERO_VABOR', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN en paciente crítico (BIFIMED). Vaborbactam es un potente inhibidor borónico diseñado específicamente contra carbapenemasas de clase A como KPC.' });
+                results.push({ drugId: 'CAZ_AVI', priority: 2, rationale: 'ALTERNATIVA eficaz, pero en alto inóculo o situación crítica se prefiere Meropenem/Vaborbactam.' });
+                results.push({ drugId: 'IMI_REL', priority: 2, rationale: 'ALTERNATIVA eficaz. Aporta ventaja si se requiere cobertura anaerobicida adicional en infecciones intraabdominales.' });
             } else {
-                results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN en paciente no crítico.' });
-                results.push({ drugId: 'MERO_VABOR', priority: 1, rationale: 'Alternativa preferente si falla CAZ/AVI.' });
+                results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN en paciente no crítico (BIFIMED). Avibactam inactiva eficazmente las carbapenemasas tipo KPC.' });
+                results.push({ drugId: 'MERO_VABOR', priority: 2, rationale: 'ALTERNATIVA de alta eficacia, reservada usualmente para fracaso de CAZ/AVI o cuadros críticos.' });
+                results.push({ drugId: 'IMI_REL', priority: 2, rationale: 'ALTERNATIVA de espectro similar, ideal si hay infecciones mixtas con anaerobios o cepas productoras de AmpC desreprimidas.' });
             }
         } else if (resistanceId === 'OXA_48') {
-            results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN.' });
-            results.push({ drugId: 'CFP_ETZ', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN para ahorro de carbapenémicos.' });
+            results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN. Avibactam es el único inhibidor de primera línea con buena actividad frente a las carbapenemasas clase D (OXA-48).' });
+            results.push({ drugId: 'CFP_ETZ', priority: 2, rationale: 'TRATAMIENTO DIRIGIDO como estrategia de ahorro de carbapenémicos, especialmente si se asocia con BLEE/AmpC.' });
         } else if (resistanceId === 'BLEE_AmpC') {
-            results.push({ drugId: 'CFP_ETZ', priority: 1, rationale: 'Alternativa para ahorro de carbapenémicos.' });
+            results.push({ drugId: 'CFP_ETZ', priority: 1, rationale: 'ESTRATEGIA DE AHORRO (Carbapenem-sparing). Enmetazobactam inhibe potentes BLEE y AmpC, protegiendo a Cefepima en infecciones graves o ITU.' });
+            results.push({ drugId: 'CAZ_AVI', priority: 2, rationale: 'ALTERNATIVA válida, pero suele reservarse para microorganismos productores de carbapenemasas.' });
+        } else if (resistanceId === 'CR' || resistanceId === 'MDR') {
+            results.push({ drugId: 'ERV', priority: 2, rationale: 'RESERVA (Fluorociclina). Excelente actividad in vitro frente a KPC y OXA-48 en infecciones intraabdominales complicadas. Evita el uso de beta-lactámicos.' });
         }
     }
+    
     if (organismId === 'P_aeruginosa') {
-        if (resistanceId === 'MBL') results.push({ drugId: 'CFD', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN.' });
-        else if (resistanceId === 'ClassA_C') results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'ELECCIÓN para Clase A o C.' });
-        else if (resistanceId === 'DTR') results.push({ drugId: 'CTZ_TAZ', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN.' });
+        if (resistanceId === 'MBL') {
+            results.push({ drugId: 'CFD', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN. Cefiderocol es el único de los nuevos antibióticos estable a las Metalo-beta-lactamasas (VIM, IMP, NDM) de Pseudomonas.' });
+        } else if (resistanceId === 'ClassA_C') {
+            results.push({ drugId: 'CAZ_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN. Eficaz si la resistencia está mediada por desrepresión de AmpC o carbapenemasas de clase A (como GES).' });
+            results.push({ drugId: 'IMI_REL', priority: 2, rationale: 'ALTERNATIVA (BIFIMED). Relebactam inactiva muy eficientemente la cefalosporinasa derivada de Pseudomonas (PDC/AmpC).' });
+        } else if (resistanceId === 'DTR') {
+            results.push({ drugId: 'CTZ_TAZ', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN (BIFIMED). Ceftolozano evade brillantemente el cierre de porinas (OprD) y la sobreexpresión de bombas de eflujo (MexAB).' });
+            results.push({ drugId: 'IMI_REL', priority: 2, rationale: 'ALTERNATIVA en Pseudomonas DTR no MBL, útil en neumonía nosocomial o bacteriemia asociada.' });
+            results.push({ drugId: 'CFD', priority: 3, rationale: 'RESERVA EXCEPCIONAL. Para cepas DTR donde CTZ/TAZ e IMI/REL muestren resistencia confirmada por antibiograma.' });
+        }
     }
+    
     if (organismId === 'S_maltophilia') {
-        results.push({ drugId: 'ATM_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN.' });
-        results.push({ drugId: 'CFD', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN.' });
+        results.push({ drugId: 'ATM_AVI', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN. Supera la resistencia dual de S. maltophilia (MBL L1 + Cefalosporinasa L2). ATM evade L1 y AVI inactiva L2.' });
+        results.push({ drugId: 'CFD', priority: 1, rationale: 'TRATAMIENTO DE ELECCIÓN. Extremadamente estable a la hidrólisis por las enzimas L1 y L2 típicas de esta bacteria.' });
     }
+    
+    if (organismId === 'A_baumannii') {
+        if (resistanceId === 'CR' || resistanceId === 'MDR') {
+            results.push({ drugId: 'CFD', priority: 1, rationale: 'TRATAMIENTO DE RESCATE (BIFIMED). Cefiderocol es el único betalactámico nuevo con actividad intrínseca frente a cepas resistentes a carbapenémicos de Acinetobacter.' });
+            results.push({ drugId: 'ERV', priority: 2, rationale: 'ALTERNATIVA (IIAc). Eravaciclina mantiene actividad in vitro excelente incluso frente a cepas XDR de A. baumannii.' });
+        }
+    }
+    
+    // Si la infección es IIAc y no hay opciones, ofrecer Eravaciclina si aplica el espectro
+    if (siteId === 'IIAc' && results.length === 0) {
+        if (organismId === 'Enterobacterales' || organismId === 'A_baumannii') {
+            results.push({ drugId: 'ERV', priority: 2, rationale: 'OPCIÓN DE RESCATE (IIAc). Eravaciclina es una fluorociclina de amplio espectro indicada para Infección Intraabdominal Complicada.' });
+        }
+    }
+
     return results;
 }
 
 export function evaluateFunding(organismId, resistanceId, drugId, antibiogramData = []) {
     const recs = getRecommendation(organismId, resistanceId);
-    const isRecommended = recs.some(r => r.drugId === drugId);
+    const matchedRec = recs.find(r => r.drugId === drugId);
+    const isRecommended = !!matchedRec;
     const expert = new MicrobiologyExpert(organismId, resistanceId, antibiogramData);
     const incongruities = expert.analyze();
+    
     const drug = DRUGS[drugId];
-    const drugInAtb = antibiogramData.find(a => 
-        a.antibiotic.toLowerCase().includes(drug.abbr.toLowerCase()) || 
-        a.antibiotic.toLowerCase().includes(drug.name.split('/')[0].toLowerCase())
-    );
-    const isSensitive = drugInAtb ? (drugInAtb.sir === 'S' || drugInAtb.sir === 'I') : true;
-    const meets = isRecommended && isSensitive && incongruities.length === 0;
+    const organism = ORGANISMS[organismId];
+    
+    let isSensitive = true;
+    let antibiogramMsg = 'Sin antibiograma para confirmar';
+    let drugInAtb = null;
+    
+    if (antibiogramData.length > 0) {
+        drugInAtb = antibiogramData.find(a => 
+            expert.matchDrug(a.antibiotic, drug.abbr) || 
+            expert.matchDrug(a.antibiotic, drug.name.split('/')[0])
+        );
+        
+        if (drugInAtb) {
+            isSensitive = (drugInAtb.sir === 'S' || drugInAtb.sir === 'I');
+            antibiogramMsg = isSensitive 
+                ? 'Sensibilidad in vitro confirmada' 
+                : 'Resistencia in vitro detectada';
+        } else {
+             antibiogramMsg = 'Fármaco no testado en el antibiograma';
+        }
+    }
+
+    // Análisis clínico exhaustivo de idoneidad (Adecuación del fármaco)
+    let clinicalAnalysis = '';
+    let isSuitable = true;
+    
+    if (!drug.targetOrganisms.includes(organismId)) {
+        isSuitable = false;
+        clinicalAnalysis = `El espectro de actividad de ${drug.name} NO incluye de forma fiable a ${organism?.name || organismId}. Se desaconseja su uso empírico o dirigido.`;
+    } else if (!isRecommended) {
+        isSuitable = false;
+        clinicalAnalysis = `Según las directrices del SMS, ${drug.name} NO es una indicación óptima para una infección por ${organism?.name} productor de ${RESISTANCE_MECHANISMS[resistanceId]?.name}. Las alternativas recomendadas tienen mejor perfil de eficacia o seguridad.`;
+    } else {
+        clinicalAnalysis = `JUSTIFICACIÓN: ${matchedRec.rationale}`;
+    }
+    
+    if (!isSensitive) {
+        isSuitable = false;
+        clinicalAnalysis += ` ADVERTENCIA CRÍTICA: El antibiograma muestra RESISTENCIA a este fármaco. Su uso clínico está absolutamente contraindicado.`;
+    }
+
+    const meets = isSuitable && isSensitive && incongruities.length === 0;
 
     return {
         meets,
+        clinicalAnalysis, // Nuevo campo explicativo
         criteria: [
-            isRecommended ? '✓ Recomendado SMS' : '✗ No recomendado SMS',
-            (antibiogramData.length > 0) ? '✓ Antibiograma disponible' : '✗ Sin antibiograma',
-            (drugInAtb && !isSensitive) ? '✗ Resistente en antibiograma' : '✓ Sensibilidad confirmada/presunta'
+            isRecommended ? '✓ Posicionamiento SMS / BIFIMED favorable' : '✗ Fuera de posicionamiento SMS preferente',
+            (antibiogramData.length > 0) ? '✓ Antibiograma valorado' : '⚠ Evaluación sin antibiograma',
+            (drugInAtb && !isSensitive) ? '✗ Resistente en antibiograma' : (drugInAtb ? '✓ Sensibilidad confirmada' : '⚠ Fármaco no testado in vitro')
         ],
         missing: [],
         incongruities

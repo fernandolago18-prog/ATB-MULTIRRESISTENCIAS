@@ -835,12 +835,27 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
       `;
     }
 
+    // Análisis Clínico Explicativo
+    let clinicalAnalysisBlock = '';
+    if (result.funding?.clinicalAnalysis) {
+        clinicalAnalysisBlock = `
+          <div class="alert mb-lg" style="border-left: 4px solid var(--primary); background: var(--blue-50);">
+            <div style="display:flex; align-items:center; gap:var(--space-sm); margin-bottom: var(--space-xs);">
+              <span style="color:var(--primary)">${ICONS.info}</span>
+              <strong style="color:var(--slate-800);">Análisis Clínico (Guía SMS):</strong>
+            </div>
+            <p style="margin-top:var(--space-xs); font-size: 0.95rem; color: var(--slate-700); line-height: 1.5;">
+              ${result.funding.clinicalAnalysis}
+            </p>
+          </div>
+        `;
+    }
+
     let drugInfo = '';
     if (result.drug) {
       drugInfo = `
         <div class="dosing-card">
           <h3 style="margin-bottom: var(--space-md);">${ICONS.pill} ${result.drug.abbr} — ${result.drug.name}</h3>
-          ${result.recommendation ? `<p style="color:var(--text-secondary); margin-bottom:var(--space-md); font-weight:500;">${result.recommendation.rationale}</p>` : ''}
           
           <div class="dosing-grid">
             ${result.drug.standardDose.loading ? `
@@ -898,14 +913,19 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
 
         alternatives = `
           <div class="section-divider">Otras opciones recomendadas</div>
-          <ul class="result-criteria">${alts}</ul>
+          <ul class="result-criteria" style="margin-bottom:var(--space-lg);">${alts}</ul>
         `;
       }
     }
 
     // Funding criteria display
     const criteriaItems = [
-      ...result.funding.criteria.map(c => `<li style="color:var(--success-text); font-weight:500;">${c}</li>`),
+      ...result.funding.criteria.map(c => {
+         const isOk = c.includes('✓');
+         const isWarn = c.includes('⚠');
+         const color = isOk ? 'var(--success-text)' : (isWarn ? 'var(--warning-text)' : 'var(--danger-text)');
+         return `<li style="color:${color}; font-weight:500;">${c}</li>`;
+      }),
       ...result.funding.missing.map(m => `<li style="color:var(--danger-text); font-weight:500;">${m}</li>`)
     ].join('');
 
@@ -916,7 +936,8 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
           ${meetsText}
         </div>
 
-        ${contraindicationAlert}
+        ${incongruityAlert}
+        ${clinicalAnalysisBlock}
         ${siteWarningAlert}
 
         <div class="section-divider">Evaluación de Criterios (BIFIMED / SMS)</div>
@@ -964,7 +985,7 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
     container.innerHTML = `
       <div class="mt-md">
         <div class="form-label" style="margin-bottom:var(--space-sm); font-size:0.85rem; color:var(--text-muted);">Cálculo automático del Filtrado Glomerular (CKD-EPI 2021)</div>
-        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:var(--space-md); margin-bottom:var(--space-md);">
+        <div class="form-grid-3" style="margin-bottom:var(--space-md);">
           <div class="form-group" style="margin-bottom:0;">
             <label class="form-label">Creatinina sérica (mg/dL)</label>
             <input type="number" class="form-input" id="input-creatinine" 
@@ -1100,7 +1121,7 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
           </div>
         `}
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-md);">
+        <div class="form-grid-2">
           <div class="pauta-compare">
             <div class="pauta-label">Pauta Estándar</div>
             <div class="pauta-value standard">${drug.standardDose.maintenance}</div>

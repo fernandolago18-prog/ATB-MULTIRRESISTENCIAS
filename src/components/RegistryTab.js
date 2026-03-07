@@ -77,7 +77,7 @@ export class RegistryTab {
       <div class="modal" style="max-width:400px;">
         <h3>${ICONS.download} Exportar Datos</h3>
         <p class="text-sm text-muted mb-lg">Rango de fechas para la exportación completa de registros.</p>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-md);">
+        <div class="form-grid-2">
           <div class="form-group">
             <label class="form-label">Desde</label>
             <input type="date" class="form-input" id="export-date-from" value="${thirtyDaysAgo}" />
@@ -296,7 +296,7 @@ export class RegistryTab {
         <div class="section-divider">Datos del Fármaco y Pauta</div>
         <div class="dosing-card" style="margin-bottom:var(--space-lg); border-color:var(--primary-200);">
           <div style="font-weight:700; color:var(--primary-700); font-size:1.1rem; margin-bottom:var(--space-xs);">${r.drugFullName} (${r.drugName})</div>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-md);">
+          <div class="form-grid-2">
             <div>
               <div class="dosing-item-label">Dosis Prescrita</div>
               <div class="dosing-item-value" style="color:var(--success-text);">${r.dose}</div>
@@ -316,7 +316,7 @@ export class RegistryTab {
              <div style="font-size:1.5rem; font-weight:800; color:var(--primary);">${r.clCr || 'N/A'}</div>
              <div class="text-xs">mL/min</div>
           </div>
-          <div style="flex:1; display:grid; grid-template-columns: repeat(3, 1fr); gap:var(--space-sm);">
+          <div class="form-grid-3" style="flex:1; gap:var(--space-sm);">
              <div><span class="text-xs text-muted">Creatinina:</span> <span class="text-sm font-bold">${r.creatinine || '-'} mg/dL</span></div>
              <div><span class="text-xs text-muted">Edad:</span> <span class="text-sm font-bold">${r.patientAge || '-'} años</span></div>
              <div><span class="text-xs text-muted">Sexo:</span> <span class="text-sm font-bold">${r.patientSex || '-'}</span></div>
@@ -324,7 +324,7 @@ export class RegistryTab {
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-lg); margin-bottom:var(--space-xl);">
+        <div class="form-grid-2" style="gap:var(--space-lg); margin-bottom:var(--space-xl);">
           <div>
             <div class="section-divider">Criterios SMS / BIFIMED</div>
             <ul class="result-criteria">
