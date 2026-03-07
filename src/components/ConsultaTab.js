@@ -106,7 +106,8 @@ export class ConsultaTab {
       kpcContext: null,
       result: null,
       showRenal: false,
-      clCr: null
+      clCr: null,
+      antibiogramData: [] // Limpiar antibiograma al volver o nueva consulta
     };
 
     this.container.innerHTML = `
