@@ -153,6 +153,12 @@ class MicrobiologyExpert {
             alerts.push('REGLA BIOQUÍMICA ABERRANTE: Sensibilidad a penicilinas/cefalosporinas de 1ª generación con resistencia a Cefalosporinas de 3ª generación es enzimáticamente imposible. Sugiere un error severo en el laboratorio.');
         }
 
+        // Aberración de espectro básico frente a carbapenemasas/BLEE
+        if ((this.res === 'MBL' || this.res === 'KPC' || this.res === 'OXA_48' || this.res === 'BLEE_AmpC') && this.isS(['ampicilina', 'amoxicilina', 'cefazolina', 'piperacilina', 'ticarcilina'])) {
+            const sBasics = this.getDrugs(['ampicilina', 'amoxicilina', 'cefazolina', 'piperacilina', 'ticarcilina'], ['S', 'I']);
+            alerts.push(`REGLA BIOQUÍMICA ABERRANTE: El mecanismo ${this.res} destruye invariablemente las penicilinas y cefalosporinas de 1ª generación. La sensibilidad reportada a ${sBasics.join(', ')} es biológicamente imposible. Indicio claro de error en el antibiograma automatizado.`);
+        }
+
         return alerts;
     }
 }
