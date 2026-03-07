@@ -553,7 +553,7 @@ export class ConsultaTab {
         <div class="upload-zone-icon">${ICONS.camera}</div>
         <div class="upload-zone-text">Capturar o Subir Antibiograma</div>
         <div class="upload-zone-hint">Haz una foto directamente o sube un pantallazo</div>
-        <input type="file" id="antibiogram-file" accept="image/*" capture="environment" style="display:none" />
+        <input type="file" id="antibiogram-file" accept="image/*" style="display:none" />
       </div>
       <div id="upload-preview-area"></div>
       <div id="gemini-status"></div>
