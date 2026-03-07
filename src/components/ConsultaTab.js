@@ -557,15 +557,24 @@ export class ConsultaTab {
       </div>
       <div id="upload-preview-area"></div>
       <div id="gemini-status"></div>
-      ${!this.state.geminiApiKey ? `
-        <div class="alert alert-warning mt-md">
-          <span class="alert-icon">${ICONS.alertTriangle}</span>
-          <div>
-            <strong>API Key necesaria.</strong> Configura tu clave de Gemini para procesar imágenes.
-            <button class="btn btn-sm btn-secondary mt-md" id="btn-set-api-key">${ICONS.key} Configurar API Key</button>
+      
+      <div class="mt-md" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-sm);">
+        ${!this.state.geminiApiKey ? `
+          <div class="alert alert-warning" style="flex:1; margin-bottom:0;">
+            <span class="alert-icon">${ICONS.alertTriangle}</span>
+            <div>
+              <strong>API Key necesaria.</strong> Configura tu clave de Gemini.
+            </div>
           </div>
-        </div>
-      ` : ''}
+        ` : `
+          <div class="text-sm text-muted">
+            ✓ API Key configurada
+          </div>
+        `}
+        <button class="btn btn-sm btn-secondary" id="btn-set-api-key">
+          ${ICONS.key} ${this.state.geminiApiKey ? 'Cambiar API Key' : 'Configurar API Key'}
+        </button>
+      </div>
     `;
 
     const zone = document.getElementById('upload-zone');
