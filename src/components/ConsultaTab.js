@@ -612,63 +612,19 @@ export class ConsultaTab {
   }
 
   async callGeminiAPI(base64Image, mimeType) {
-    const prompt = `Analiza esta imagen de un antibiograma clínico. Extrae TODOS los antibióticos visibles con sus valores de CMI (Concentración Mínima Inhibitoria) y su categoría de sensibilidad (S=Sensible, I=Intermedio, R=Resistente).
-
-Devuelve EXCLUSIVAMENTE un JSON array con objetos que tengan estos campos:
-- "antibiotic": nombre del antibiótico
-- "mic": valor de CMI como string (ejemplo: "0.5", "<=0.25", ">=16")
-- "sir": categoría ("S", "I", o "R")
-
-Ejemplo de formato de respuesta:
-[{"antibiotic":"Amikacina","mic":"4","sir":"S"},{"antibiotic":"Meropenem","mic":">=16","sir":"R"}]
-
-Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código.`;
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${this.state.geminiApiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: prompt },
-              {
-                inline_data: {
-                  mime_type: mimeType,
-                  data: base64Image
-                }
-              }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 2048
-          }
-        })
-      }
-    );
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Error HTTP ${response.status}`);
-    }
+    const response = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64Image, mimeType })
+    });
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    // Parse JSON from response (handle potential markdown wrapping)
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error('No se encontraron datos en la respuesta');
+    if (!response.ok) {
+      throw new Error(data.error || `Error HTTP ${response.status}`);
+    }
 
-    const parsed = JSON.parse(jsonMatch[0]);
-    if (!Array.isArray(parsed)) throw new Error('Formato de respuesta inesperado');
-
-    return parsed.map(item => ({
-      antibiotic: item.antibiotic || '',
-      mic: String(item.mic || ''),
-      sir: (item.sir || '').toUpperCase()
-    }));
+    return data;
   }
 
   // ======================================================================
