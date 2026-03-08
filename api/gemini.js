@@ -31,8 +31,9 @@ Ejemplo de formato de respuesta:
 Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código.`;
 
   try {
+    console.log("Calling Gemini API with model gemini-1.5-flash...");
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,7 +59,11 @@ Devuelve SOLO el JSON, sin texto adicional, sin markdown, sin bloques de código
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      return res.status(response.status).json({ error: err.error?.message || `Error HTTP ${response.status} de la API de Google` });
+      console.error("Google API Error Body:", JSON.stringify(err));
+      return res.status(response.status).json({ 
+        error: err.error?.message || `Error HTTP ${response.status} de la API de Google`,
+        details: err.error || null
+      });
     }
 
     const data = await response.json();
