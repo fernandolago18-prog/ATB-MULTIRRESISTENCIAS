@@ -575,8 +575,6 @@ export class ConsultaTab {
     // Show preview
     const reader = new FileReader();
     reader.onload = async (e) => {
-      const base64Data = e.target.result.split(',')[1];
-
       preview.innerHTML = `<img src="${e.target.result}" class="upload-preview" alt="Antibiograma" />`;
       status.innerHTML = `
         <div class="alert alert-info mt-md">
@@ -586,7 +584,33 @@ export class ConsultaTab {
       `;
 
       try {
-        const result = await this.callGeminiAPI(base64Data, file.type);
+        // Optimizar imagen en el cliente para no exceder límites de Vercel/Gemini
+        const img = new Image();
+        img.src = e.target.result;
+        await new Promise(resolve => img.onload = resolve);
+
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+          const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const base64Data = dataUrl.split(',')[1];
+        const mimeType = 'image/jpeg';
+
+        const result = await this.callGeminiAPI(base64Data, mimeType);
         this.state.antibiogramData = result;
         this.state.antibiogramMode = 'manual';
         this.renderAntibiogramSection();
@@ -613,7 +637,15 @@ export class ConsultaTab {
       body: JSON.stringify({ base64Image, mimeType })
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      // Usar text() primero para evitar "The string did not match the expected pattern" en Safari
+      // cuando Vercel devuelve un error HTML (ej. 413 Payload Too Large)
+      const text = await response.text();
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error(`Error inesperado del servidor HTTP ${response.status}. Puede que el archivo sea muy grande o haya un fallo de red.`);
+    }
 
     if (!response.ok) {
       throw new Error(data.error || `Error HTTP ${response.status}`);
