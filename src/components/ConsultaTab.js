@@ -569,11 +569,6 @@ export class ConsultaTab {
   }
 
   async processAntibiogramImage(file) {
-    if (!this.state.geminiApiKey) {
-      this.showApiKeyModal();
-      return;
-    }
-
     const preview = document.getElementById('upload-preview-area');
     const status = document.getElementById('gemini-status');
 
