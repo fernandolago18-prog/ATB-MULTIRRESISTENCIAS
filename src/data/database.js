@@ -41,20 +41,6 @@ export async function saveSetting(key, value) {
     }
 }
 
-/**
- * Get the Gemini API key
- */
-export async function getGeminiApiKey() {
-    return await getSetting('gemini_api_key');
-}
-
-/**
- * Save the Gemini API key
- */
-export async function saveGeminiApiKey(apiKey) {
-    return await saveSetting('gemini_api_key', apiKey);
-}
-
 // ---- Records ----
 
 /**

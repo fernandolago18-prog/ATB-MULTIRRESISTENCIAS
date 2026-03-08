@@ -11,7 +11,7 @@ import {
   getDrugsForOrganismResistance
 } from '../data/clinicalData.js';
 import { ICONS } from '../icons.js';
-import { saveRecord, generatePatientId, isNHC, getGeminiApiKey, saveGeminiApiKey } from '../data/database.js';
+import { saveRecord, generatePatientId, isNHC } from '../data/database.js';
 import { showToast } from './Toast.js';
 
 export class ConsultaTab {
@@ -39,14 +39,6 @@ export class ConsultaTab {
   }
 
   async mount() {
-    // Load API key from Supabase asynchronously
-    try {
-      const key = await getGeminiApiKey();
-      if (key) this.state.geminiApiKey = key;
-    } catch (e) {
-      console.warn('Could not load Gemini API key:', e.message);
-    }
-    
     // Attempt to recover state from previous session
     if (this.loadState()) {
       if (this.state.result) {
@@ -557,24 +549,6 @@ export class ConsultaTab {
       </div>
       <div id="upload-preview-area"></div>
       <div id="gemini-status"></div>
-      
-      <div class="mt-md" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-sm);">
-        ${!this.state.geminiApiKey ? `
-          <div class="alert alert-warning" style="flex:1; margin-bottom:0;">
-            <span class="alert-icon">${ICONS.alertTriangle}</span>
-            <div>
-              <strong>API Key necesaria.</strong> Configura tu clave de Gemini.
-            </div>
-          </div>
-        ` : `
-          <div class="text-sm text-muted">
-            ✓ API Key configurada
-          </div>
-        `}
-        <button class="btn btn-sm btn-secondary" id="btn-set-api-key">
-          ${ICONS.key} ${this.state.geminiApiKey ? 'Cambiar API Key' : 'Configurar API Key'}
-        </button>
-      </div>
     `;
 
     const zone = document.getElementById('upload-zone');
@@ -591,46 +565,6 @@ export class ConsultaTab {
 
     fileInput.addEventListener('change', (e) => {
       if (e.target.files.length) this.processAntibiogramImage(e.target.files[0]);
-    });
-
-    const btnKey = document.getElementById('btn-set-api-key');
-    if (btnKey) btnKey.addEventListener('click', () => this.showApiKeyModal());
-  }
-
-  showApiKeyModal() {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-      <div class="modal">
-        <h3>🔑 Configurar API Key de Gemini</h3>
-        <p class="text-sm text-muted mb-lg">Introduce tu API Key de Google AI Studio para procesar imágenes de antibiogramas.</p>
-        <div class="form-group">
-          <label class="form-label">API Key</label>
-          <input type="password" class="form-input" id="input-api-key" placeholder="AIzaSy..." value="${this.state.geminiApiKey}" />
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" id="btn-modal-cancel">Cancelar</button>
-          <button class="btn btn-primary" id="btn-modal-save">Guardar</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-
-    document.getElementById('btn-modal-cancel').addEventListener('click', () => overlay.remove());
-    document.getElementById('btn-modal-save').addEventListener('click', async () => {
-      const key = document.getElementById('input-api-key').value.trim();
-      if (key) {
-        this.state.geminiApiKey = key;
-        // Save to Supabase asynchronously
-        saveGeminiApiKey(key).catch(err => console.error('Error saving API key:', err));
-        showToast('API Key guardada en Supabase', 'success');
-        overlay.remove();
-        this.renderAntibiogramSection();
-      }
-    });
-
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
     });
   }
 
